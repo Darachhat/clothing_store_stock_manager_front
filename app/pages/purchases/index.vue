@@ -292,6 +292,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ middleware: ['auth'] })
+
 const purchaseApi = usePurchaseApi()
 const supplierApi = useSupplierApi()
 const variantApi = useVariantApi()

@@ -37,10 +37,18 @@ export function useApi() {
       if (!authStore.accessToken && typeof window !== 'undefined') {
         authStore.restoreSession()
       }
-      let token = authStore.accessToken || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null)
+      let token =
+        authStore.accessToken ||
+        (typeof window !== 'undefined'
+          ? localStorage.getItem('stock_access_token') || localStorage.getItem('access_token')
+          : null)
 
       if (typeof window !== 'undefined') {
-        const hasRefresh = !!(authStore.$state.refreshToken || localStorage.getItem('refresh_token'))
+        const hasRefresh = !!(
+          authStore.$state.refreshToken ||
+          localStorage.getItem('stock_refresh_token') ||
+          localStorage.getItem('refresh_token')
+        )
         if (hasRefresh && (!token || isJwtExpired(token, 30))) {
           const ok = await authStore.refreshSession()
           if (ok && authStore.accessToken) {
@@ -52,6 +60,11 @@ export function useApi() {
       const headers = new Headers(options.headers || {})
       if (token) {
         headers.set('Authorization', `Bearer ${token}`)
+      }
+      // Attach system credential server-side only (credential stays private)
+      if (import.meta.server) {
+        const sysAuth = config.apiBaseAuth as string
+        if (sysAuth) headers.set('X-System-Authorization', sysAuth)
       }
       options.headers = headers
     },
@@ -165,6 +178,8 @@ export function useReportApi() {
   return {
     getDashboard: (period?: string) =>
       apiFetch('/api/admin/v1/reports/dashboard', { params: { period }, query: { period } }),
+    getWarehouseDashboard: (period?: string) =>
+      apiFetch('/api/admin/v1/reports/warehouse-dashboard', { params: { period }, query: { period } }),
     getSalesReport: (params: Record<string, unknown>) =>
       apiFetch('/api/admin/v1/reports/sales', { params, query: params }),
     getInventoryReport: (params: Record<string, unknown>) =>

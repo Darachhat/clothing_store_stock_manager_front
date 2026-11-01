@@ -27,10 +27,10 @@
         <template #cell-actions="{ row }">
           <div class="flex gap-1">
             <AppButton size="sm" variant="ghost" label="View" :to="`/suppliers/${row.id}`" />
-            <AppButton size="sm" variant="ghost" @click="openEditModal(row)" />
+            <AppButton size="sm" variant="ghost" label="Edit" @click="openEditModal(row)" />
             <AppButton
               v-if="row.status === 'ACTIVE'"
-              size="sm" variant="danger"
+              size="sm" variant="danger" label="Deactivate"
               @click="deactivateSupplier(row)"
             />
           </div>
@@ -44,7 +44,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-base font-semibold">{{ editingSupplier ? 'Edit Supplier' : 'Add Supplier' }}</h3>
-            <AppButton variant="ghost" size="sm" @click="showModal = false" />
+            <AppButton variant="ghost" size="sm" label="Close" @click="showModal = false" />
           </div>
         </template>
 

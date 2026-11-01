@@ -83,15 +83,25 @@
 </template>
 
 <script setup lang="ts">
-import type { DashboardData } from '~/types'
+interface WarehouseDashboard {
+  period: string
+  total_sku_count: number
+  total_units: number
+  low_stock_count: number
+  out_of_stock_count: number
+  units_in: number
+  units_out: number
+  open_transfers: number
+}
 
 definePageMeta({ middleware: ['auth'] })
 useHead({ title: 'Stock Dashboard — Clothing Store' })
 
-const { getDashboard } = useReportApi()
+const { getWarehouseDashboard } = useReportApi()
+const authStore = useAuthStore()
 
 const period = ref('today')
-const dashboard = ref<DashboardData | null>(null)
+const dashboard = ref<WarehouseDashboard | null>(null)
 
 const periodOptions = [
   { label: 'Today', value: 'today' },
@@ -105,38 +115,59 @@ const kpiCards = computed(() => [
   {
     label: 'Low Stock Alerts',
     value: dashboard.value?.low_stock_count ?? 0,
-    sublabel: 'variants below reorder threshold',
+    sublabel: 'variants at or below reorder level',
     icon: 'i-heroicons-exclamation-triangle',
   },
   {
-    label: 'Orders Fulfilled',
-    value: dashboard.value?.sales_count ?? 0,
-    sublabel: 'completed stock dispatches',
+    label: 'Out of Stock',
+    value: dashboard.value?.out_of_stock_count ?? 0,
+    sublabel: 'variants with zero units',
+    icon: 'i-heroicons-x-circle',
+  },
+  {
+    label: 'Units On Hand',
+    value: fmtInt(dashboard.value?.total_units ?? 0),
+    sublabel: `${fmtInt(dashboard.value?.total_sku_count ?? 0)} stock records`,
     icon: 'i-heroicons-cube',
   },
   {
-    label: 'Stock Value Sold',
-    value: `$${fmt(dashboard.value?.revenue ?? 0)}`,
-    sublabel: 'selected period turnover',
-    icon: 'i-heroicons-arrows-right-left',
+    label: 'Units In',
+    value: fmtInt(dashboard.value?.units_in ?? 0),
+    sublabel: 'received / added in period',
+    icon: 'i-heroicons-arrow-down-tray',
+  },
+  {
+    label: 'Units Out',
+    value: fmtInt(dashboard.value?.units_out ?? 0),
+    sublabel: 'sold / removed in period',
+    icon: 'i-heroicons-arrow-up-tray',
+  },
+  {
+    label: 'Open Transfers',
+    value: dashboard.value?.open_transfers ?? 0,
+    sublabel: 'pending or in transit',
+    icon: 'i-heroicons-truck',
   },
 ])
 
-const quickActions = [
-  { label: 'Adjust Stock Levels', to: '/inventory/adjustments', icon: 'i-heroicons-adjustments-horizontal' },
-  { label: 'Inter-Warehouse Transfer', to: '/inventory/transfers', icon: 'i-heroicons-truck' },
-  { label: 'New Purchase Order', to: '/purchases/new', icon: 'i-heroicons-document-text' },
-  { label: 'Add Product / Variant', to: '/products/new', icon: 'i-heroicons-plus' },
-  { label: 'Print Barcode / QR Labels', to: '/labels/generate', icon: 'i-heroicons-qr-code' },
+const allQuickActions = [
+  { label: 'Adjust Stock Levels', to: '/inventory/adjustments', icon: 'i-heroicons-adjustments-horizontal', perm: 'inventory.adjust' },
+  { label: 'Inter-Warehouse Transfer', to: '/inventory/transfers', icon: 'i-heroicons-truck', perm: 'inventory.transfer' },
+  { label: 'New Purchase Order', to: '/purchases/new', icon: 'i-heroicons-document-text', perm: 'purchase.create' },
+  { label: 'Add Product / Variant', to: '/products/new', icon: 'i-heroicons-plus', perm: 'product.create' },
+  { label: 'Print Barcode / QR Labels', to: '/labels/generate', icon: 'i-heroicons-qr-code', perm: 'product.read' },
 ]
 
-function fmt(n: number): string {
-  return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
+// Only offer actions the signed-in user is actually allowed to perform
+const quickActions = computed(() => allQuickActions.filter((a) => authStore.hasPermission(a.perm)))
+
+function fmtInt(n: number): string {
+  return new Intl.NumberFormat('en-US').format(n)
 }
 
 async function loadDashboard() {
   try {
-    dashboard.value = await getDashboard(period.value) as DashboardData
+    dashboard.value = await getWarehouseDashboard(period.value) as WarehouseDashboard
   } catch (err) {
     console.error(err)
   }

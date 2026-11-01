@@ -13,9 +13,27 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo('/login')
   }
 
-  // Enforce ADMIN or MANAGER role
+  // Enforce ADMIN, MANAGER, or WAREHOUSE role
   const roles = authStore.user?.roles?.map((r: any) => r.name) ?? []
-  if (!roles.some((r: string) => ['ADMIN', 'MANAGER'].includes(r))) {
+  if (!roles.some((r: string) => ['ADMIN', 'MANAGER', 'WAREHOUSE'].includes(r))) {
+    await authStore.logout()
     return navigateTo('/login')
+  }
+
+  // Enforce strict Stock Manager portal route boundary
+  const allowedPrefixes = [
+    '/dashboard',
+    '/inventory',
+    '/products',
+    '/labels',
+    '/purchases',
+    '/suppliers',
+    '/reports/inventory',
+    '/reports/purchases',
+    '/settings',
+    '/login',
+  ]
+  if (to.path !== '/' && !allowedPrefixes.some(prefix => to.path === prefix || to.path.startsWith(`${prefix}/`))) {
+    return navigateTo('/dashboard')
   }
 })
