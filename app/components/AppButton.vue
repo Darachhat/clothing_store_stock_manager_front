@@ -34,7 +34,7 @@ withDefaults(defineProps<{
   label?:    string
   to?:       string
   external?: boolean
-  variant?:  'default' | 'primary' | 'danger' | 'ghost'
+  variant?:  'default' | 'primary' | 'secondary' | 'danger' | 'ghost'
   size?:     'sm' | 'md' | 'lg'
   block?:    boolean
   loading?:  boolean

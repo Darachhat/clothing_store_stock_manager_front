@@ -1,0 +1,65 @@
+// Centralized API Endpoints for Stock Manager Frontend
+export const API_ENDPOINTS = {
+  auth: {
+    login: '/api/admin/v1/auth/login',
+    logout: '/api/admin/v1/auth/logout',
+    refresh: '/api/admin/v1/auth/refresh',
+    me: '/api/admin/v1/auth/me',
+  },
+  products: {
+    base: '/api/admin/v1/products',
+    detail: (id: string) => `/api/admin/v1/products/${id}`,
+    variants: (id: string) => `/api/admin/v1/products/${id}/variants`,
+    variantDetail: (id: string) => `/api/admin/v1/product-variants/${id}`,
+    qr: (id: string, format = 'svg') => `/api/admin/v1/product-variants/${id}/qr?format=${format}`,
+    barcode: (id: string, format = 'svg', writeText = false) =>
+      `/api/admin/v1/product-variants/${id}/barcode?format=${format}&write_text=${writeText}`,
+    byQr: (ref: string) => `/api/admin/v1/product-variants/by-qr/${ref}`,
+    byBarcode: (barcode: string) => `/api/admin/v1/product-variants/by-barcode/${barcode}`,
+    bySku: (sku: string) => `/api/admin/v1/product-variants/by-sku/${sku}`,
+  },
+  catalog: {
+    categories: '/api/admin/v1/categories',
+    categoryDetail: (id: string) => `/api/admin/v1/categories/${id}`,
+    brands: '/api/admin/v1/brands',
+    brandDetail: (id: string) => `/api/admin/v1/brands/${id}`,
+    colors: '/api/admin/v1/colors',
+    colorDetail: (id: string) => `/api/admin/v1/colors/${id}`,
+    sizes: '/api/admin/v1/sizes',
+    sizeDetail: (id: string) => `/api/admin/v1/sizes/${id}`,
+    suppliers: '/api/admin/v1/suppliers',
+    supplierDetail: (id: string) => `/api/admin/v1/suppliers/${id}`,
+  },
+  inventory: {
+    stocks: '/api/admin/v1/inventory/stocks',
+    movements: '/api/admin/v1/inventory/movements',
+    adjustments: '/api/admin/v1/inventory/adjustments',
+    transfers: '/api/admin/v1/inventory/transfers',
+    transferDetail: (id: string) => `/api/admin/v1/inventory/transfers/${id}`,
+    approveTransfer: (id: string) => `/api/admin/v1/inventory/transfers/${id}/approve`,
+    dispatchTransfer: (id: string) => `/api/admin/v1/inventory/transfers/${id}/dispatch`,
+    receiveTransfer: (id: string) => `/api/admin/v1/inventory/transfers/${id}/receive`,
+    cancelTransfer: (id: string) => `/api/admin/v1/inventory/transfers/${id}/cancel`,
+  },
+  purchases: {
+    base: '/api/admin/v1/purchases',
+    detail: (id: string) => `/api/admin/v1/purchases/${id}`,
+    approve: (id: string) => `/api/admin/v1/purchases/${id}/approve`,
+    cancel: (id: string) => `/api/admin/v1/purchases/${id}/cancel`,
+    receipts: (id: string) => `/api/admin/v1/purchases/${id}/receipts`,
+  },
+  branches: {
+    base: '/api/admin/v1/branches/',
+    detail: (id: string) => `/api/admin/v1/branches/${id}`,
+    warehouses: '/api/admin/v1/warehouses',
+  },
+  labels: {
+    generate: '/api/admin/v1/labels/generate',
+  },
+  reports: {
+    dashboard: '/api/admin/v1/reports/dashboard',
+    inventory: '/api/admin/v1/reports/inventory',
+    purchases: '/api/admin/v1/reports/purchases',
+  },
+} as const
+

@@ -1,149 +1,64 @@
-// Helper to decode JWT payload safely
-function isJwtExpired(token: string, bufferSeconds = 30): boolean {
-  try {
-    const parts = token.split('.')
-    if (parts.length < 2) return false
-    const base64 = parts[1]!.replace(/-/g, '+').replace(/_/g, '/')
-    const jsonStr = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    )
-    const payload = JSON.parse(jsonStr)
-    if (typeof payload.exp === 'number') {
-      return Date.now() >= (payload.exp - bufferSeconds) * 1000
-    }
-  } catch {
-    // If decoding fails, assume not expired and let backend handle
-  }
-  return false
-}
+// Centralized API Composable Facade for Stock Manager Frontend
+// Integrates with app/api/client and app/api/endpoints while preserving 100% backward compatibility
+import { createStockApiClient } from '~/api/client'
+import { API_ENDPOINTS } from '~/api/endpoints'
+import type {
+  Product,
+  ProductCreate,
+  ProductUpdate,
+  ProductVariant,
+  ProductPagination,
+  Category,
+  Brand,
+  Color,
+  Size,
+  Supplier,
+  PurchaseOrder,
+  Branch,
+  Warehouse,
+  DashboardData,
+} from '~/types'
 
-// Centralized API composable — wraps $fetch with auth headers, SSR-safe base URL, and token refresh
 export function useApi() {
-  const config = useRuntimeConfig()
-  const authStore = useAuthStore()
-
-  const baseURL = (import.meta.server
-    ? (config.apiBase || 'http://backend:8000')
-    : config.public.apiBase) as string
-
-  const apiFetch = $fetch.create({
-    baseURL,
-    retry: 1,
-    retryStatusCodes: [401],
-    async onRequest({ options }) {
-      if (!authStore.accessToken && typeof window !== 'undefined') {
-        authStore.restoreSession()
-      }
-      let token =
-        authStore.accessToken ||
-        (typeof window !== 'undefined'
-          ? localStorage.getItem('stock_access_token') || localStorage.getItem('access_token')
-          : null)
-
-      if (typeof window !== 'undefined') {
-        const hasRefresh = !!(
-          authStore.$state.refreshToken ||
-          localStorage.getItem('stock_refresh_token') ||
-          localStorage.getItem('refresh_token')
-        )
-        if (hasRefresh && (!token || isJwtExpired(token, 30))) {
-          const ok = await authStore.refreshSession()
-          if (ok && authStore.accessToken) {
-            token = authStore.accessToken
-          }
-        }
-      }
-
-      const headers = new Headers(options.headers || {})
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`)
-      }
-      // Attach system credential server-side only (credential stays private)
-      if (import.meta.server) {
-        const sysAuth = config.apiBaseAuth as string
-        if (sysAuth) headers.set('X-System-Authorization', sysAuth)
-      }
-      options.headers = headers
-    },
-    async onResponseError({ response }) {
-      if (response.status === 401) {
-        const refreshed = await authStore.refreshSession()
-        if (!refreshed) {
-          authStore.logout()
-          await navigateTo('/login')
-        }
-      }
-    },
-  })
+  const client = createStockApiClient()
 
   return {
-    baseURL,
-    apiFetch,
-    get: <T = any>(url: string, params?: Record<string, unknown>) =>
-      apiFetch<T>(url, { params, query: params }),
-    post: <T = any>(url: string, body?: unknown) =>
-      apiFetch<T>(url, { method: 'POST', body: body as any }),
-    patch: <T = any>(url: string, body?: unknown) =>
-      apiFetch<T>(url, { method: 'PATCH', body: body as any }),
-    put: <T = any>(url: string, body?: unknown) =>
-      apiFetch<T>(url, { method: 'PUT', body: body as any }),
-    delete: <T = any>(url: string) =>
-      apiFetch<T>(url, { method: 'DELETE' }),
+    baseURL: client.baseURL,
+    apiFetch: client.fetch,
+    get: client.get,
+    post: client.post,
+    patch: client.patch,
+    put: client.put,
+    delete: client.delete,
   }
 }
 
-
-// Typed Domain API Helpers (all targeting /api/admin/v1/*)
 export function useProductApi() {
   const { apiFetch } = useApi()
 
   return {
     listProducts: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/products', { params, query: params }),
+      apiFetch<ProductPagination>(API_ENDPOINTS.products.base, { params, query: params }),
     getProduct: (id: string) =>
-      apiFetch(`/api/admin/v1/products/${id}`),
-    createProduct: (body: unknown) =>
-      apiFetch('/api/admin/v1/products', { method: 'POST', body: body as any }),
-    updateProduct: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/products/${id}`, { method: 'PUT', body: body as any }),
+      apiFetch<Product>(API_ENDPOINTS.products.detail(id)),
+    createProduct: (body: ProductCreate | unknown) =>
+      apiFetch<Product>(API_ENDPOINTS.products.base, { method: 'POST', body: body as any }),
+    updateProduct: (id: string, body: ProductUpdate | unknown) =>
+      apiFetch<Product>(API_ENDPOINTS.products.detail(id), { method: 'PUT', body: body as any }),
     deleteProduct: (id: string) =>
-      apiFetch(`/api/admin/v1/products/${id}`, { method: 'DELETE' }),
+      apiFetch(API_ENDPOINTS.products.detail(id), { method: 'DELETE' }),
     getVariants: (productId: string) =>
-      apiFetch(`/api/admin/v1/products/${productId}/variants`),
+      apiFetch<ProductVariant[]>(API_ENDPOINTS.products.variants(productId)),
     getVariantQr: (variantId: string, format: 'png' | 'svg' = 'svg') =>
-      `${useRuntimeConfig().public.apiBase}/api/v1/product-variants/${variantId}/qr?format=${format}`,
+      `${useRuntimeConfig().public.apiBase}${API_ENDPOINTS.products.qr(variantId, format)}`,
     getVariantBarcode: (variantId: string, format: 'png' | 'svg' = 'svg', writeText = false) =>
-      `${useRuntimeConfig().public.apiBase}/api/v1/product-variants/${variantId}/barcode?format=${format}&write_text=${writeText}`,
+      `${useRuntimeConfig().public.apiBase}${API_ENDPOINTS.products.barcode(variantId, format, writeText)}`,
     searchByQr: (ref: string) =>
-      apiFetch(`/api/admin/v1/product-variants/by-qr/${ref}`),
+      apiFetch<ProductVariant>(API_ENDPOINTS.products.byQr(ref)),
     searchByBarcode: (barcode: string) =>
-      apiFetch(`/api/admin/v1/product-variants/by-barcode/${barcode}`),
+      apiFetch<ProductVariant>(API_ENDPOINTS.products.byBarcode(barcode)),
     searchBySku: (sku: string) =>
-      apiFetch(`/api/admin/v1/product-variants/by-sku/${sku}`),
-  }
-}
-
-export function useSaleApi() {
-  const { apiFetch } = useApi()
-
-  return {
-    listSales: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/sales', { params, query: params }),
-    getSale: (id: string) =>
-      apiFetch(`/api/admin/v1/sales/${id}`),
-    createSale: (body: unknown) =>
-      apiFetch('/api/admin/v1/sales', { method: 'POST', body: body as any }),
-    completeSale: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/sales/${id}/complete`, { method: 'POST', body: body as any }),
-    cancelSale: (id: string) =>
-      apiFetch(`/api/admin/v1/sales/${id}/cancel`, { method: 'POST' }),
-    listReturns: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/returns', { params, query: params }),
-    createReturn: (body: unknown) =>
-      apiFetch('/api/admin/v1/returns', { method: 'POST', body: body as any }),
+      apiFetch<ProductVariant>(API_ENDPOINTS.products.bySku(sku)),
   }
 }
 
@@ -152,140 +67,23 @@ export function useInventoryApi() {
 
   return {
     listStocks: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/inventory/stocks', { params, query: params }),
+      apiFetch(API_ENDPOINTS.inventory.stocks, { params, query: params }),
     listMovements: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/inventory/movements', { params, query: params }),
+      apiFetch(API_ENDPOINTS.inventory.movements, { params, query: params }),
     createAdjustment: (body: unknown) =>
-      apiFetch('/api/admin/v1/inventory/adjustments', { method: 'POST', body: body as any }),
+      apiFetch(API_ENDPOINTS.inventory.adjustments, { method: 'POST', body: body as any }),
     listTransfers: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/inventory/transfers', { params, query: params }),
+      apiFetch(API_ENDPOINTS.inventory.transfers, { params, query: params }),
     createTransfer: (body: unknown) =>
-      apiFetch('/api/admin/v1/inventory/transfers', { method: 'POST', body: body as any }),
+      apiFetch(API_ENDPOINTS.inventory.transfers, { method: 'POST', body: body as any }),
     approveTransfer: (id: string) =>
-      apiFetch(`/api/admin/v1/inventory/transfers/${id}/approve`, { method: 'POST' }),
+      apiFetch(API_ENDPOINTS.inventory.approveTransfer(id), { method: 'POST' }),
     dispatchTransfer: (id: string) =>
-      apiFetch(`/api/admin/v1/inventory/transfers/${id}/dispatch`, { method: 'POST' }),
+      apiFetch(API_ENDPOINTS.inventory.dispatchTransfer(id), { method: 'POST' }),
     receiveTransfer: (id: string) =>
-      apiFetch(`/api/admin/v1/inventory/transfers/${id}/receive`, { method: 'POST' }),
+      apiFetch(API_ENDPOINTS.inventory.receiveTransfer(id), { method: 'POST' }),
     cancelTransfer: (id: string) =>
-      apiFetch(`/api/admin/v1/inventory/transfers/${id}/cancel`, { method: 'POST' }),
-  }
-}
-
-export function useReportApi() {
-  const { apiFetch } = useApi()
-
-  return {
-    getDashboard: (period?: string) =>
-      apiFetch('/api/admin/v1/reports/dashboard', { params: { period }, query: { period } }),
-    getWarehouseDashboard: (period?: string) =>
-      apiFetch('/api/admin/v1/reports/warehouse-dashboard', { params: { period }, query: { period } }),
-    getSalesReport: (params: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/reports/sales', { params, query: params }),
-    getInventoryReport: (params: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/reports/inventory', { params, query: params }),
-    getPurchasesReport: (params: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/reports/purchases', { params, query: params }),
-    getProfitReport: (params: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/reports/profit', { params, query: params }),
-  }
-}
-
-export function useCatalogApi() {
-  const { apiFetch } = useApi()
-
-  return {
-    // Categories
-    listCategories: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/categories', { params, query: params }),
-    createCategory: (body: unknown) =>
-      apiFetch('/api/admin/v1/categories', { method: 'POST', body: body as any }),
-    updateCategory: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/categories/${id}`, { method: 'PUT', body: body as any }),
-    deleteCategory: (id: string) =>
-      apiFetch(`/api/admin/v1/categories/${id}`, { method: 'DELETE' }),
-    // Brands
-    listBrands: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/brands', { params, query: params }),
-    createBrand: (body: unknown) =>
-      apiFetch('/api/admin/v1/brands', { method: 'POST', body: body as any }),
-    updateBrand: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/brands/${id}`, { method: 'PUT', body: body as any }),
-    deleteBrand: (id: string) =>
-      apiFetch(`/api/admin/v1/brands/${id}`, { method: 'DELETE' }),
-    // Colors
-    listColors: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/colors', { params, query: params }),
-    createColor: (body: unknown) =>
-      apiFetch('/api/admin/v1/colors', { method: 'POST', body: body as any }),
-    updateColor: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/colors/${id}`, { method: 'PUT', body: body as any }),
-    deleteColor: (id: string) =>
-      apiFetch(`/api/admin/v1/colors/${id}`, { method: 'DELETE' }),
-    // Sizes
-    listSizes: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/sizes', { params, query: params }),
-    createSize: (body: unknown) =>
-      apiFetch('/api/admin/v1/sizes', { method: 'POST', body: body as any }),
-    updateSize: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/sizes/${id}`, { method: 'PUT', body: body as any }),
-    deleteSize: (id: string) =>
-      apiFetch(`/api/admin/v1/sizes/${id}`, { method: 'DELETE' }),
-  }
-}
-
-export function useVariantApi() {
-  const { apiFetch } = useApi()
-
-  return {
-    listVariants: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/product-variants', { params, query: params }),
-    getVariant: (id: string) =>
-      apiFetch(`/api/admin/v1/product-variants/${id}`),
-    createVariant: (body: unknown) =>
-      apiFetch('/api/admin/v1/product-variants', { method: 'POST', body: body as any }),
-    updateVariant: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/product-variants/${id}`, { method: 'PUT', body: body as any }),
-    deleteVariant: (id: string) =>
-      apiFetch(`/api/admin/v1/product-variants/${id}`, { method: 'DELETE' }),
-    getQrUrl: (id: string, format: 'png' | 'svg' = 'svg') =>
-      `${useRuntimeConfig().public.apiBase}/api/v1/product-variants/${id}/qr?format=${format}`,
-    getBarcodeUrl: (id: string, format: 'png' | 'svg' = 'svg', writeText = false) =>
-      `${useRuntimeConfig().public.apiBase}/api/v1/product-variants/${id}/barcode?format=${format}&write_text=${writeText}`,
-  }
-}
-
-export function useCustomerApi() {
-  const { apiFetch } = useApi()
-
-  return {
-    listCustomers: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/customers', { params, query: params }),
-    getCustomer: (id: string) =>
-      apiFetch(`/api/admin/v1/customers/${id}`),
-    createCustomer: (body: unknown) =>
-      apiFetch('/api/admin/v1/customers', { method: 'POST', body: body as any }),
-    updateCustomer: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/customers/${id}`, { method: 'PUT', body: body as any }),
-    adjustPoints: (id: string, body: { points: number; note?: string }) =>
-      apiFetch(`/api/admin/v1/customers/${id}/points`, { method: 'POST', body }),
-  }
-}
-
-export function useSupplierApi() {
-  const { apiFetch } = useApi()
-
-  return {
-    listSuppliers: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/suppliers', { params, query: params }),
-    getSupplier: (id: string) =>
-      apiFetch(`/api/admin/v1/suppliers/${id}`),
-    createSupplier: (body: unknown) =>
-      apiFetch('/api/admin/v1/suppliers', { method: 'POST', body: body as any }),
-    updateSupplier: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/suppliers/${id}`, { method: 'PUT', body: body as any }),
-    deleteSupplier: (id: string) =>
-      apiFetch(`/api/admin/v1/suppliers/${id}`, { method: 'DELETE' }),
+      apiFetch(API_ENDPOINTS.inventory.cancelTransfer(id), { method: 'POST' }),
   }
 }
 
@@ -294,102 +92,101 @@ export function usePurchaseApi() {
 
   return {
     listOrders: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/purchases', { params, query: params }),
+      apiFetch<PurchaseOrder[]>(API_ENDPOINTS.purchases.base, { params, query: params }),
     getOrder: (id: string) =>
-      apiFetch(`/api/admin/v1/purchases/${id}`),
+      apiFetch<PurchaseOrder>(API_ENDPOINTS.purchases.detail(id)),
     createOrder: (body: unknown) =>
-      apiFetch('/api/admin/v1/purchases', { method: 'POST', body: body as any }),
+      apiFetch<PurchaseOrder>(API_ENDPOINTS.purchases.base, { method: 'POST', body: body as any }),
     updateOrder: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/purchases/${id}`, { method: 'PATCH', body: body as any }),
+      apiFetch<PurchaseOrder>(API_ENDPOINTS.purchases.detail(id), { method: 'PUT', body: body as any }),
     approveOrder: (id: string) =>
-      apiFetch(`/api/admin/v1/purchases/${id}/approve`, { method: 'POST' }),
+      apiFetch(API_ENDPOINTS.purchases.approve(id), { method: 'POST' }),
     cancelOrder: (id: string) =>
-      apiFetch(`/api/admin/v1/purchases/${id}/cancel`, { method: 'POST' }),
-    // Goods receipts
+      apiFetch(API_ENDPOINTS.purchases.cancel(id), { method: 'POST' }),
     listReceipts: (orderId: string) =>
-      apiFetch(`/api/admin/v1/purchases/${orderId}/receipts`),
+      apiFetch(API_ENDPOINTS.purchases.receipts(orderId)),
     createReceipt: (body: unknown) =>
       apiFetch('/api/admin/v1/purchases/receipts', { method: 'POST', body: body as any }),
   }
 }
 
-export function useExpenseApi() {
+export function useCatalogApi() {
   const { apiFetch } = useApi()
 
   return {
     listCategories: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/expenses/categories', { params, query: params }),
+      apiFetch<Category[]>(API_ENDPOINTS.catalog.categories, { params, query: params }),
     createCategory: (body: unknown) =>
-      apiFetch('/api/admin/v1/expenses/categories', { method: 'POST', body: body as any }),
+      apiFetch<Category>(API_ENDPOINTS.catalog.categories, { method: 'POST', body: body as any }),
     updateCategory: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/expenses/categories/${id}`, { method: 'PATCH', body: body as any }),
-    listExpenses: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/expenses', { params, query: params }),
-    getExpense: (id: string) =>
-      apiFetch(`/api/admin/v1/expenses/${id}`),
-    createExpense: (body: unknown) =>
-      apiFetch('/api/admin/v1/expenses', { method: 'POST', body: body as any }),
-    updateExpense: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/expenses/${id}`, { method: 'PATCH', body: body as any }),
-    approveExpense: (id: string) =>
-      apiFetch(`/api/admin/v1/expenses/${id}/approve`, { method: 'POST' }),
-    rejectExpense: (id: string) =>
-      apiFetch(`/api/admin/v1/expenses/${id}/reject`, { method: 'POST' }),
+      apiFetch<Category>(API_ENDPOINTS.catalog.categoryDetail(id), { method: 'PUT', body: body as any }),
+    deleteCategory: (id: string) =>
+      apiFetch(API_ENDPOINTS.catalog.categoryDetail(id), { method: 'DELETE' }),
+
+    listBrands: (params?: Record<string, unknown>) =>
+      apiFetch<Brand[]>(API_ENDPOINTS.catalog.brands, { params, query: params }),
+    createBrand: (body: unknown) =>
+      apiFetch<Brand>(API_ENDPOINTS.catalog.brands, { method: 'POST', body: body as any }),
+    updateBrand: (id: string, body: unknown) =>
+      apiFetch<Brand>(API_ENDPOINTS.catalog.brandDetail(id), { method: 'PUT', body: body as any }),
+    deleteBrand: (id: string) =>
+      apiFetch(API_ENDPOINTS.catalog.brandDetail(id), { method: 'DELETE' }),
+
+    listColors: (params?: Record<string, unknown>) =>
+      apiFetch<Color[]>(API_ENDPOINTS.catalog.colors, { params, query: params }),
+    createColor: (body: unknown) =>
+      apiFetch<Color>(API_ENDPOINTS.catalog.colors, { method: 'POST', body: body as any }),
+    updateColor: (id: string, body: unknown) =>
+      apiFetch<Color>(API_ENDPOINTS.catalog.colorDetail(id), { method: 'PUT', body: body as any }),
+    deleteColor: (id: string) =>
+      apiFetch(API_ENDPOINTS.catalog.colorDetail(id), { method: 'DELETE' }),
+
+    listSizes: (params?: Record<string, unknown>) =>
+      apiFetch<Size[]>(API_ENDPOINTS.catalog.sizes, { params, query: params }),
+    createSize: (body: unknown) =>
+      apiFetch<Size>(API_ENDPOINTS.catalog.sizes, { method: 'POST', body: body as any }),
+    updateSize: (id: string, body: unknown) =>
+      apiFetch<Size>(API_ENDPOINTS.catalog.sizeDetail(id), { method: 'PUT', body: body as any }),
+    deleteSize: (id: string) =>
+      apiFetch(API_ENDPOINTS.catalog.sizeDetail(id), { method: 'DELETE' }),
   }
 }
 
-export function usePromotionApi() {
+export function useVariantApi() {
   const { apiFetch } = useApi()
 
   return {
-    listPromotions: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/promotions', { params, query: params }),
-    validateCoupon: (body: { code: string; cart_total: number }) =>
-      apiFetch('/api/admin/v1/promotions/validate', { method: 'POST', body }),
-    getPromotion: (id: string) =>
-      apiFetch(`/api/admin/v1/promotions/${id}`),
-    createPromotion: (body: unknown) =>
-      apiFetch('/api/admin/v1/promotions', { method: 'POST', body: body as any }),
-    updatePromotion: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/promotions/${id}`, { method: 'PATCH', body: body as any }),
-    deletePromotion: (id: string) =>
-      apiFetch(`/api/admin/v1/promotions/${id}`, { method: 'DELETE' }),
+    listVariants: (params?: Record<string, unknown>) =>
+      apiFetch<ProductVariant[]>(API_ENDPOINTS.products.base + '/variants', { params, query: params }),
+    getVariant: (id: string) =>
+      apiFetch<ProductVariant>(API_ENDPOINTS.products.variantDetail(id)),
+    createVariant: (body: unknown) =>
+      apiFetch<ProductVariant>(API_ENDPOINTS.products.base + '/variants', { method: 'POST', body: body as any }),
+    updateVariant: (id: string, body: unknown) =>
+      apiFetch<ProductVariant>(API_ENDPOINTS.products.variantDetail(id), { method: 'PUT', body: body as any }),
+    deleteVariant: (id: string) =>
+      apiFetch(API_ENDPOINTS.products.variantDetail(id), { method: 'DELETE' }),
+    getQrUrl: (id: string, format: 'png' | 'svg' = 'svg') =>
+      `${useRuntimeConfig().public.apiBase}${API_ENDPOINTS.products.qr(id, format)}`,
+    getBarcodeUrl: (id: string, format: 'png' | 'svg' = 'svg', writeText = false) =>
+      `${useRuntimeConfig().public.apiBase}${API_ENDPOINTS.products.barcode(id, format, writeText)}`,
   }
 }
 
-export function useLabelApi() {
+export function useSupplierApi() {
   const { apiFetch } = useApi()
 
   return {
-    generateLabels: (body: unknown) =>
-      apiFetch<Blob>('/api/admin/v1/labels/generate', { method: 'POST', body: body as any, responseType: 'blob' as any }),
-    downloadLabels: (body: unknown) =>
-      apiFetch<Blob>('/api/admin/v1/labels/generate', { method: 'POST', body: body as any, responseType: 'blob' as any }),
-  }
-}
-
-export function useUserApi() {
-  const { apiFetch } = useApi()
-
-  return {
-    listUsers: (params?: Record<string, unknown>) =>
-      apiFetch('/api/admin/v1/users', { params, query: params }),
-    getUser: (id: string) =>
-      apiFetch(`/api/admin/v1/users/${id}`),
-    createUser: (body: unknown) =>
-      apiFetch('/api/admin/v1/users', { method: 'POST', body: body as any }),
-    updateUser: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/users/${id}`, { method: 'PATCH', body: body as any }),
-    deleteUser: (id: string) =>
-      apiFetch(`/api/admin/v1/users/${id}`, { method: 'DELETE' }),
-    listRoles: () =>
-      apiFetch('/api/admin/v1/roles'),
-    createRole: (body: unknown) =>
-      apiFetch('/api/admin/v1/roles', { method: 'POST', body: body as any }),
-    updateRole: (id: string, body: unknown) =>
-      apiFetch(`/api/admin/v1/roles/${id}`, { method: 'PATCH', body: body as any }),
-    listPermissions: () =>
-      apiFetch('/api/admin/v1/roles/permissions'),
+    listSuppliers: (params?: Record<string, unknown>) =>
+      apiFetch<Supplier[]>(API_ENDPOINTS.catalog.suppliers, { params, query: params }),
+    getSupplier: (id: string) =>
+      apiFetch<Supplier>(API_ENDPOINTS.catalog.supplierDetail(id)),
+    createSupplier: (body: unknown) =>
+      apiFetch<Supplier>(API_ENDPOINTS.catalog.suppliers, { method: 'POST', body: body as any }),
+    updateSupplier: (id: string, body: unknown) =>
+      apiFetch<Supplier>(API_ENDPOINTS.catalog.supplierDetail(id), { method: 'PUT', body: body as any }),
+    deleteSupplier: (id: string) =>
+      apiFetch(API_ENDPOINTS.catalog.supplierDetail(id), { method: 'DELETE' }),
   }
 }
 
@@ -398,20 +195,88 @@ export function useBranchApi() {
 
   return {
     listBranches: () =>
-      apiFetch<Array<{
-        id: string
-        code: string
-        name: string
-        address?: string
-        phone?: string
-        status: string
-        warehouses: Array<{
-          id: string
-          branch_id: string
-          name: string
-          is_default: boolean
-          status: string
-        }>
-      }>>('/api/admin/v1/branches/'),
+      apiFetch<Branch[]>(API_ENDPOINTS.branches.base),
+    updateBranch: (id: string, body: Record<string, unknown>) =>
+      apiFetch(API_ENDPOINTS.branches.detail(id), { method: 'PATCH', body }),
+    createBranch: (body: { code: string; name: string; address?: string; phone?: string; email?: string }) =>
+      apiFetch(API_ENDPOINTS.branches.base, { method: 'POST', body }),
+    listWarehouses: (branchId?: string) =>
+      apiFetch<Warehouse[]>(API_ENDPOINTS.branches.warehouses, branchId ? { params: { branch_id: branchId }, query: { branch_id: branchId } } : undefined),
+    createWarehouse: (body: { branch_id: string; name: string; location?: string; is_default?: boolean }) =>
+      apiFetch(API_ENDPOINTS.branches.warehouses, { method: 'POST', body }),
+  }
+}
+
+export function useLabelApi() {
+  const { apiFetch } = useApi()
+
+  return {
+    generateLabels: (body: unknown) =>
+      apiFetch<Blob>(API_ENDPOINTS.labels.generate, { method: 'POST', body: body as any, responseType: 'blob' as any }),
+    downloadLabels: (body: unknown) =>
+      apiFetch<Blob>(API_ENDPOINTS.labels.generate, { method: 'POST', body: body as any, responseType: 'blob' as any }),
+  }
+}
+
+export function useReportApi() {
+  const { apiFetch } = useApi()
+
+  return {
+    getDashboard: (period?: string) =>
+      apiFetch<DashboardData>(API_ENDPOINTS.reports.dashboard, { params: { period }, query: { period } }),
+    getWarehouseDashboard: (period?: string) =>
+      apiFetch('/api/admin/v1/reports/warehouse-dashboard', { params: { period }, query: { period } }),
+    getInventoryReport: (params: Record<string, unknown>) =>
+      apiFetch(API_ENDPOINTS.reports.inventory, { params, query: params }),
+    getPurchasesReport: (params: Record<string, unknown>) =>
+      apiFetch(API_ENDPOINTS.reports.purchases, { params, query: params }),
+  }
+}
+
+export function useSaleApi() {
+  const { apiFetch } = useApi()
+  return {
+    listSales: (params?: Record<string, unknown>) => apiFetch('/api/admin/v1/sales', { params, query: params }),
+    getSale: (id: string) => apiFetch(`/api/admin/v1/sales/${id}`),
+    createSale: (body: unknown) => apiFetch('/api/admin/v1/sales', { method: 'POST', body: body as any }),
+    completeSale: (id: string, body?: unknown) => apiFetch(`/api/admin/v1/sales/${id}/complete`, { method: 'POST', body: body as any }),
+    cancelSale: (id: string) => apiFetch(`/api/admin/v1/sales/${id}/cancel`, { method: 'POST' }),
+    listReturns: (params?: Record<string, unknown>) => apiFetch('/api/admin/v1/returns', { params, query: params }),
+    createReturn: (body: unknown) => apiFetch('/api/admin/v1/returns', { method: 'POST', body: body as any }),
+  }
+}
+
+export function useCustomerApi() {
+  const { apiFetch } = useApi()
+  return {
+    listCustomers: (params?: Record<string, unknown>) => apiFetch('/api/admin/v1/customers', { params, query: params }),
+    getCustomer: (id: string) => apiFetch(`/api/admin/v1/customers/${id}`),
+    createCustomer: (body: unknown) => apiFetch('/api/admin/v1/customers', { method: 'POST', body: body as any }),
+    updateCustomer: (id: string, body: unknown) => apiFetch(`/api/admin/v1/customers/${id}`, { method: 'PUT', body: body as any }),
+  }
+}
+
+export function useExpenseApi() {
+  const { apiFetch } = useApi()
+  return {
+    listCategories: () => apiFetch('/api/admin/v1/expenses/categories'),
+    listExpenses: (params?: Record<string, unknown>) => apiFetch('/api/admin/v1/expenses', { params, query: params }),
+  }
+}
+
+export function usePromotionApi() {
+  const { apiFetch } = useApi()
+  return {
+    listPromotions: (params?: Record<string, unknown>) => apiFetch('/api/admin/v1/promotions', { params, query: params }),
+  }
+}
+
+export function useUserApi() {
+  const { apiFetch } = useApi()
+  return {
+    listUsers: (params?: Record<string, unknown>) => apiFetch('/api/admin/v1/users', { params, query: params }),
+    getUser: (id: string) => apiFetch(`/api/admin/v1/users/${id}`),
+    listRoles: () => apiFetch('/api/admin/v1/roles'),
+    listPermissions: () => apiFetch('/api/admin/v1/roles/permissions'),
   }
 }

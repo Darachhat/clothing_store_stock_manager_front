@@ -65,11 +65,11 @@
               </div>
               <div class="detail-row">
                 <dt>Created</dt>
-                <dd>{{ fmtDate(product.created_at) }}</dd>
+                <dd>{{ fmtDate(product.created_at || '') }}</dd>
               </div>
               <div class="detail-row">
                 <dt>Updated</dt>
-                <dd>{{ fmtDate(product.updated_at) }}</dd>
+                <dd>{{ fmtDate(product.updated_at || '') }}</dd>
               </div>
             </dl>
           </AppCard>

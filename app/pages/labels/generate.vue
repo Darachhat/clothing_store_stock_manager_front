@@ -507,7 +507,7 @@ async function generateLabelsPdf() {
     }
 
     const blob = await generateLabels(body)
-    const url = URL.createObjectURL(blob)
+    const url = URL.createObjectURL(blob as Blob)
     const a = document.createElement('a')
     a.href = url
     a.download = `khmer-product-labels-${Date.now()}.pdf`

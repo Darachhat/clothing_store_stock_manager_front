@@ -1,18 +1,14 @@
 // Auth store — manages JWT tokens and current user
 import { defineStore } from 'pinia'
+import { API_ENDPOINTS } from '~/api/endpoints'
+import type { User } from '~/types/api.generated'
 
-interface User {
-  id: string
-  username: string
-  email: string
-  full_name: string
-  roles: Array<{ name: string; permissions: Array<{ code: string }> }>
-  status: string
+export interface AuthUser extends User {
   branch?: { id?: string; name?: string } | null
 }
 
 interface AuthState {
-  user: User | null
+  user: AuthUser | null
   accessToken: string | null
   refreshToken: string | null
 }
@@ -53,8 +49,8 @@ export const useAuthStore = defineStore('auth', {
       const data = await $fetch<{
         access_token: string
         refresh_token: string
-        user: User
-      }>('/api/admin/v1/auth/login', {
+        user: AuthUser
+      }> (API_ENDPOINTS.auth.login, {
         baseURL: getApiBase(),
         method: 'POST',
         body: { username, password },
@@ -81,7 +77,7 @@ export const useAuthStore = defineStore('auth', {
         const data = await $fetch<{
           access_token: string
           refresh_token: string
-        }>('/api/admin/v1/auth/refresh', {
+        }> (API_ENDPOINTS.auth.refresh, {
           baseURL: getApiBase(),
           method: 'POST',
           body: { refresh_token: currentRefresh },
@@ -106,7 +102,7 @@ export const useAuthStore = defineStore('auth', {
           : null)
       if (currentRefresh) {
         try {
-          await $fetch('/api/admin/v1/auth/logout', {
+          await $fetch(API_ENDPOINTS.auth.logout, {
             baseURL: getApiBase(),
             method: 'POST',
             body: { refresh_token: currentRefresh },
@@ -140,7 +136,7 @@ export const useAuthStore = defineStore('auth', {
       }
       if (!this.accessToken) return
       try {
-        const user = await $fetch<User>('/api/admin/v1/auth/me', {
+        const user = await $fetch<AuthUser>(API_ENDPOINTS.auth.me, {
           baseURL: getApiBase(),
           headers: { Authorization: `Bearer ${this.accessToken}` },
         })
@@ -149,7 +145,7 @@ export const useAuthStore = defineStore('auth', {
         const ok = await this.refreshSession()
         if (ok && this.accessToken) {
           try {
-            const user = await $fetch<User>('/api/admin/v1/auth/me', {
+            const user = await $fetch<AuthUser>(API_ENDPOINTS.auth.me, {
               baseURL: getApiBase(),
               headers: { Authorization: `Bearer ${this.accessToken}` },
             })
