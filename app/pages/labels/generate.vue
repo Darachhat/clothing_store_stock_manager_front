@@ -92,7 +92,7 @@
               <input
                 v-model="settings.store_name_override"
                 type="text"
-                placeholder="ហាងលក់សម្លៀកបំពាក់ ភ្នំពេញ"
+                placeholder="គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ "
                 class="field-input kh-text"
               />
             </div>
@@ -215,7 +215,7 @@
                 :class="`size-${settings.label_width_mm}x${settings.label_height_mm}`"
               >
                 <div class="kh-sticker__store">
-                  {{ settings.store_name_override.trim() || 'ហាងលក់សម្លៀកបំពាក់ ភ្នំពេញ' }}
+                  {{ settings.store_name_override.trim() || 'គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ ' }}
                 </div>
 
                 <div class="kh-sticker__product-name">
@@ -279,7 +279,7 @@
         :class="`size-${settings.label_width_mm}x${settings.label_height_mm}`"
       >
         <div class="kh-sticker__store">
-          {{ settings.store_name_override.trim() || 'ហាងលក់សម្លៀកបំពាក់ ភ្នំពេញ' }}
+          {{ settings.store_name_override.trim() || 'គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ ' }}
         </div>
 
         <div class="kh-sticker__product-name">
@@ -357,7 +357,7 @@ const settings = reactive({
   columns: 1,
   code_type: 'BARCODE',
   show_khr: false,
-  store_name_override: 'ហាងលក់សម្លៀកបំពាក់ ភ្នំពេញ',
+  store_name_override: 'គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ ',
 })
 
 const isThermalRollMode = computed(() =>

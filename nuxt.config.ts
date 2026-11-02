@@ -39,12 +39,12 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    apiBase:     process.env.NUXT_API_BASE     || 'http://backend:8000',
+    apiBase:     process.env.NUXT_API_BASE     || 'https://api.kimvannak.store',
     // X-System-Authorization value injected server-side; never sent to browser
     apiBaseAuth: process.env.NUXT_API_BASE_AUTH || '',
     public: {
       apiBase:     process.env.NUXT_PUBLIC_API_BASE     || '/api/proxy',
-      backendBase: process.env.NUXT_PUBLIC_BACKEND_BASE || 'http://localhost:8000',
+      backendBase: process.env.NUXT_API_BASE            || 'https://api.kimvannak.store',
       appName:     process.env.NUXT_PUBLIC_APP_NAME     || 'Clothing Store — Stock Manager',
     },
   },
@@ -72,6 +72,6 @@ export default defineNuxtConfig({
 
   routeRules: {
     // @ts-expect-error: 'proxy' is valid at runtime but not in the RouteRules type definition
-    '/uploads/**': { proxy: `${process.env.NUXT_API_BASE || 'http://backend:8000'}/uploads/**` },
+    '/uploads/**': { proxy: `${process.env.NUXT_API_BASE || 'https://api.kimvannak.store'}/uploads/**` },
   },
 })

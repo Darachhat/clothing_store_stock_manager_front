@@ -117,7 +117,7 @@
         <div class="sticker-preview-stage">
           <div class="kh-product-sticker" style="--sticker-w: 50mm; --sticker-h: 30mm;">
             <div class="kh-sticker__store">
-              ហាងលក់សម្លៀកបំពាក់ ភ្នំពេញ
+              គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ 
             </div>
             <div class="kh-sticker__product-name">
               {{ product?.name || qrVariant.sku }}
