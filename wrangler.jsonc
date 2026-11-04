@@ -9,6 +9,13 @@
   "assets": {
     "directory": "./.output/public",
     "binding": "ASSETS"
+  },
+  "vars": {
+    "NUXT_API_BASE": "https://api.kimvannak.store",
+    "NUXT_API_BASE_AUTH": "Basic c3RvY2tfZnJvbnQ6T2tqRk1Rbjc3S3k3U1l5R254Nm9tUjQwdmFRd3V6N0R3Q29iUGR0RnpBcw==",
+    "NUXT_PUBLIC_API_BASE": "/api/proxy",
+    "NUXT_PUBLIC_BACKEND_BASE": "https://api.kimvannak.store",
+    "NUXT_PUBLIC_APP_NAME": "Kim Vannak Store — Stock Manager"
   }
 }
 

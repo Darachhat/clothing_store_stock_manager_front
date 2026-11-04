@@ -13,9 +13,14 @@ interface AuthState {
   refreshToken: string | null
 }
 
-function getApiBase() {
+let cachedApiBase: string | null = null
+
+function getApiBase(): string {
+  if (cachedApiBase) return cachedApiBase
   const config = useRuntimeConfig()
-  return (import.meta.server ? (config.apiBase || 'http://backend:8000') : config.public.apiBase) as string
+  const base = String(import.meta.server ? config.apiBase : (config.public?.apiBase || '/api/proxy')).trim()
+  cachedApiBase = base || '/api/proxy'
+  return cachedApiBase
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -50,26 +55,30 @@ export const useAuthStore = defineStore('auth', {
         access_token: string
         refresh_token: string
         user: AuthUser
-      }> (API_ENDPOINTS.auth.login, {
+      }>(API_ENDPOINTS.auth.login, {
         baseURL: getApiBase(),
         method: 'POST',
         body: { username, password },
+        timeout: 12000,
       })
 
       this.accessToken = data.access_token
       this.$state.refreshToken = data.refresh_token
       this.user = data.user
 
-      if (process.client) {
+      if (typeof window !== 'undefined') {
         localStorage.setItem('stock_access_token', data.access_token)
         localStorage.setItem('stock_refresh_token', data.refresh_token)
+        try {
+          localStorage.setItem('stock_user', JSON.stringify(data.user))
+        } catch {}
       }
     },
 
     async refreshSession(): Promise<boolean> {
       const currentRefresh =
         this.$state.refreshToken ||
-        (process.client
+        (typeof window !== 'undefined'
           ? localStorage.getItem('stock_refresh_token') || localStorage.getItem('refresh_token')
           : null)
       if (!currentRefresh) return false
@@ -77,14 +86,15 @@ export const useAuthStore = defineStore('auth', {
         const data = await $fetch<{
           access_token: string
           refresh_token: string
-        }> (API_ENDPOINTS.auth.refresh, {
+        }>(API_ENDPOINTS.auth.refresh, {
           baseURL: getApiBase(),
           method: 'POST',
           body: { refresh_token: currentRefresh },
+          timeout: 8000,
         })
         this.accessToken = data.access_token
         this.$state.refreshToken = data.refresh_token
-        if (process.client) {
+        if (typeof window !== 'undefined') {
           localStorage.setItem('stock_access_token', data.access_token)
           localStorage.setItem('stock_refresh_token', data.refresh_token)
         }
@@ -94,39 +104,57 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    clearLocalSession() {
+      this.user = null
+      this.accessToken = null
+      this.$state.refreshToken = null
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('stock_access_token')
+        localStorage.removeItem('stock_refresh_token')
+        localStorage.removeItem('stock_user')
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+      }
+    },
+
     async logout() {
       const currentRefresh =
         this.$state.refreshToken ||
-        (process.client
+        (typeof window !== 'undefined'
           ? localStorage.getItem('stock_refresh_token') || localStorage.getItem('refresh_token')
           : null)
+      const currentAccess = this.accessToken
+
+      // Clear local state and localStorage IMMEDIATELY before network call
+      this.clearLocalSession()
+
       if (currentRefresh) {
         try {
           await $fetch(API_ENDPOINTS.auth.logout, {
             baseURL: getApiBase(),
             method: 'POST',
             body: { refresh_token: currentRefresh },
-            headers: this.accessToken ? { Authorization: `Bearer ${this.accessToken}` } : undefined,
+            headers: currentAccess ? { Authorization: `Bearer ${currentAccess}` } : undefined,
+            timeout: 4000,
           })
         } catch {}
-      }
-      this.user = null
-      this.accessToken = null
-      this.$state.refreshToken = null
-      if (process.client) {
-        localStorage.removeItem('stock_access_token')
-        localStorage.removeItem('stock_refresh_token')
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
       }
     },
 
     restoreSession() {
-      if (process.client) {
+      if (typeof window !== 'undefined') {
         const token = localStorage.getItem('stock_access_token') || localStorage.getItem('access_token')
         const refresh = localStorage.getItem('stock_refresh_token') || localStorage.getItem('refresh_token')
         if (token) this.accessToken = token
         if (refresh) this.$state.refreshToken = refresh
+        if (!this.user) {
+          const cachedUser = localStorage.getItem('stock_user')
+          if (cachedUser) {
+            try {
+              this.user = JSON.parse(cachedUser)
+            } catch {}
+          }
+        }
       }
     },
 
@@ -139,8 +167,14 @@ export const useAuthStore = defineStore('auth', {
         const user = await $fetch<AuthUser>(API_ENDPOINTS.auth.me, {
           baseURL: getApiBase(),
           headers: { Authorization: `Bearer ${this.accessToken}` },
+          timeout: 8000,
         })
         this.user = user
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('stock_user', JSON.stringify(user))
+          } catch {}
+        }
       } catch {
         const ok = await this.refreshSession()
         if (ok && this.accessToken) {
@@ -148,12 +182,18 @@ export const useAuthStore = defineStore('auth', {
             const user = await $fetch<AuthUser>(API_ENDPOINTS.auth.me, {
               baseURL: getApiBase(),
               headers: { Authorization: `Bearer ${this.accessToken}` },
+              timeout: 8000,
             })
             this.user = user
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem('stock_user', JSON.stringify(user))
+              } catch {}
+            }
             return
           } catch {}
         }
-        this.logout()
+        await this.logout()
       }
     },
   },

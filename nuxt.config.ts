@@ -60,11 +60,11 @@ export default defineNuxtConfig({
   runtimeConfig: {
     apiBase:     process.env.NUXT_API_BASE     || 'https://api.kimvannak.store',
     // X-System-Authorization value injected server-side; never sent to browser
-    apiBaseAuth: process.env.NUXT_API_BASE_AUTH || '',
+    apiBaseAuth: process.env.NUXT_API_BASE_AUTH || 'Basic c3RvY2tfZnJvbnQ6T2tqRk1Rbjc3S3k3U1l5R254Nm9tUjQwdmFRd3V6N0R3Q29iUGR0RnpBcw==',
     public: {
       apiBase:     process.env.NUXT_PUBLIC_API_BASE     || '/api/proxy',
-      backendBase: process.env.NUXT_API_BASE            || 'https://api.kimvannak.store',
-      appName:     process.env.NUXT_PUBLIC_APP_NAME     || 'Clothing Store — Stock Manager',
+      backendBase: process.env.NUXT_PUBLIC_BACKEND_BASE || process.env.NUXT_API_BASE || 'https://api.kimvannak.store',
+      appName:     process.env.NUXT_PUBLIC_APP_NAME     || 'Kim Vannak Store — Stock Manager',
     },
   },
 
@@ -113,6 +113,8 @@ export default defineNuxtConfig({
       },
     },
     '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
-    '/uploads/**': { proxy: `${process.env.NUXT_API_BASE || 'https://api.kimvannak.store'}/uploads/**` },
+    ...(process.env.NUXT_API_BASE
+      ? { '/uploads/**': { proxy: `${process.env.NUXT_API_BASE}/uploads/**` } }
+      : {}),
   } as any,
 })

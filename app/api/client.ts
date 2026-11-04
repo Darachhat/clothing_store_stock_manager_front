@@ -20,13 +20,22 @@ function isJwtExpired(token: string, bufferSeconds = 30): boolean {
   return false
 }
 
-export function createStockApiClient() {
-  const config = useRuntimeConfig()
-  const authStore = useAuthStore()
+let cachedClientBaseURL: string | null = null
 
-  const baseURL = (import.meta.server
-    ? (config.apiBase || 'http://backend:8000')
-    : config.public.apiBase) as string
+export function createStockApiClient() {
+  let baseURL = cachedClientBaseURL || ''
+  let sysAuth = ''
+  if (!baseURL || import.meta.server) {
+    const config = useRuntimeConfig()
+    baseURL = String(import.meta.server ? config.apiBase : (config.public?.apiBase || '/api/proxy')).trim() || '/api/proxy'
+    if (!import.meta.server) {
+      cachedClientBaseURL = baseURL
+    } else {
+      sysAuth = String(config.apiBaseAuth || '').trim()
+    }
+  }
+
+  const authStore = useAuthStore()
 
   const apiFetch = $fetch.create({
     baseURL,
@@ -60,10 +69,8 @@ export function createStockApiClient() {
       if (token) {
         headers.set('Authorization', `Bearer ${token}`)
       }
-      // Attach system credential server-side only (credential stays private)
-      if (import.meta.server) {
-        const sysAuth = config.apiBaseAuth as string
-        if (sysAuth) headers.set('X-System-Authorization', sysAuth)
+      if (import.meta.server && sysAuth) {
+        headers.set('X-System-Authorization', sysAuth)
       }
       options.headers = headers
     },
@@ -71,8 +78,10 @@ export function createStockApiClient() {
       if (response.status === 401) {
         const refreshed = await authStore.refreshSession()
         if (!refreshed) {
-          authStore.logout()
-          await navigateTo('/login')
+          await authStore.logout()
+          if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+            window.location.replace('/login')
+          }
         }
       }
     },
@@ -95,4 +104,3 @@ export function createStockApiClient() {
 }
 
 export type StockApiClient = ReturnType<typeof createStockApiClient>
-
