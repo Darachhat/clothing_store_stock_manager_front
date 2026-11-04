@@ -88,8 +88,30 @@ export default defineNuxtConfig({
     storesDirs: ['./app/stores/**'],
   },
 
+  nitro: {
+    preset: process.env.NITRO_PRESET || (process.env.CF_PAGES ? 'cloudflare_pages' : 'cloudflare-module'),
+    compatibilityDate: '2024-11-01',
+    cloudflare: {
+      deployConfig: false,
+    },
+  } as any,
+
   routeRules: {
-    // @ts-expect-error: 'proxy' is valid at runtime but not in the RouteRules type definition
+    '/': {
+      headers: {
+        'cache-control': 'no-cache, no-store, must-revalidate',
+        'cdn-cache-control': 'no-store',
+        'cloudflare-cdn-cache-control': 'no-store',
+      },
+    },
+    '/login': {
+      headers: {
+        'cache-control': 'no-cache, no-store, must-revalidate',
+        'cdn-cache-control': 'no-store',
+        'cloudflare-cdn-cache-control': 'no-store',
+      },
+    },
+    '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
     '/uploads/**': { proxy: `${process.env.NUXT_API_BASE || 'https://api.kimvannak.store'}/uploads/**` },
-  },
+  } as any,
 })
