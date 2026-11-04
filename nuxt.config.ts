@@ -7,6 +7,24 @@ export default defineNuxtConfig({
     port: 3003,
   },
 
+  experimental: {
+    appManifest: false,
+    payloadExtraction: false,
+    defaults: {
+      nuxtLink: {
+        prefetch: false,
+      },
+    },
+  },
+
+  hooks: {
+    'build:manifest': (manifest) => {
+      for (const key in manifest) {
+        manifest[key].prefetch = false
+      }
+    },
+  },
+
   // Nuxt 4 app dir convention
   future: {
     compatibilityVersion: 4,

@@ -1,5 +1,7 @@
 // Admin auth middleware — restores session and enforces ADMIN or MANAGER role
 export default defineNuxtRouteMiddleware(async (to) => {
+  if (import.meta.server) return
+
   const authStore = useAuthStore()
 
   if (process.client) {
