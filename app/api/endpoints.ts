@@ -8,6 +8,8 @@ export const API_ENDPOINTS = {
     telegramConfig: '/api/admin/v1/auth/telegram/config',
     telegramLogin: '/api/admin/v1/auth/telegram/login',
     telegramLink: '/api/admin/v1/auth/telegram/link',
+    telegramAppChallenge: '/api/admin/v1/auth/telegram/app-challenge',
+    telegramAppStatus: (token: string) => `/api/admin/v1/auth/telegram/app-status/${token}`,
     phoneRequestVerification: '/api/admin/v1/auth/phone/request-verification',
     phoneVerify: '/api/admin/v1/auth/phone/verify',
   },
