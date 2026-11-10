@@ -1,55 +1,55 @@
 <template>
-  <div class="page-root">
+  <div class="flex flex-col gap-4">
     <!-- Header -->
-    <div class="page-header">
-      <div class="page-header__left">
-        <NuxtLink :to="`/products/${id}`" class="back-link">
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex flex-col gap-0.5">
+        <NuxtLink :to="`/products/${id}`" class="inline-flex items-center gap-1 text-xs text-ink-tertiary hover:text-ink no-underline mb-1 transition-colors">
           <UIcon name="i-heroicons-arrow-left" class="w-3.5 h-3.5" />
           {{ product?.name ?? 'Product' }}
         </NuxtLink>
-        <h2 class="page-title">Edit Product</h2>
-        <p class="page-subtitle">Update product information</p>
+        <h2 class="text-base font-semibold text-ink tracking-tight">Edit Product</h2>
+        <p class="text-xs text-ink-tertiary mt-0.5">Update product information</p>
       </div>
     </div>
 
-    <div v-if="loading" class="state-card">Loading…</div>
+    <div v-if="loading" class="flex items-center justify-center p-12 bg-surface-card border border-border-subtle rounded-lg text-ink-tertiary text-xs sm:text-sm">Loading…</div>
 
     <template v-else-if="product">
       <AppCard title="Basic Information">
-        <form class="form-grid" @submit.prevent="save">
-          <div class="form-field">
-            <label class="field-label">Product Name <span class="required">*</span></label>
-            <input v-model="form.name" class="field-input" required />
+        <form class="flex flex-col gap-4" @submit.prevent="save">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-ink-secondary">Product Name <span class="text-status-red">*</span></label>
+            <input v-model="form.name" class="w-full px-2.5 py-2 text-xs sm:text-sm bg-surface-card border border-border-default rounded-md text-ink outline-none focus:border-ink transition-colors" required />
           </div>
 
-          <div class="form-field">
-            <label class="field-label">Description</label>
-            <textarea v-model="form.description" class="field-input field-textarea" rows="4" />
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-ink-secondary">Description</label>
+            <textarea v-model="form.description" class="w-full px-2.5 py-2 text-xs sm:text-sm bg-surface-card border border-border-default rounded-md text-ink outline-none focus:border-ink transition-colors resize-y min-h-[90px]" rows="4" />
           </div>
 
-          <div class="form-row">
-            <div class="form-field">
-              <label class="field-label">Category</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-ink-secondary">Category</label>
               <AppSelect v-model="form.category_id" :options="categoryOptions" placeholder="Select category" />
             </div>
-            <div class="form-field">
-              <label class="field-label">Brand</label>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-ink-secondary">Brand</label>
               <AppSelect v-model="form.brand_id" :options="brandOptions" placeholder="Select brand" />
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-field">
-              <label class="field-label">Supplier</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-ink-secondary">Supplier</label>
               <AppSelect v-model="form.supplier_id" :options="supplierOptions" placeholder="Select supplier" />
             </div>
-            <div class="form-field">
-              <label class="field-label">Status</label>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-ink-secondary">Status</label>
               <AppSelect v-model="form.status" :options="statusOptions" />
             </div>
           </div>
 
-          <div class="form-actions">
+          <div class="flex justify-end gap-2 pt-2 border-t border-border-subtle">
             <AppButton type="button" variant="ghost" :to="`/products/${id}`">Cancel</AppButton>
             <AppButton type="submit" variant="primary" :loading="saving">Save Changes</AppButton>
           </div>
@@ -57,7 +57,7 @@
       </AppCard>
     </template>
 
-    <div v-else class="state-card">Product not found.</div>
+    <div v-else class="flex items-center justify-center p-12 bg-surface-card border border-border-subtle rounded-lg text-ink-tertiary text-xs sm:text-sm">Product not found.</div>
   </div>
 </template>
 
@@ -144,45 +144,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style scoped>
-.page-root { display: flex; flex-direction: column; gap: 16px; }
-
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.page-header__left { display: flex; flex-direction: column; gap: 2px; }
-
-.back-link {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 12px; color: var(--text-tertiary); text-decoration: none; margin-bottom: 4px;
-}
-.back-link:hover { color: var(--text-primary); }
-
-.page-title { font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.01em; }
-.page-subtitle { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
-
-.state-card {
-  display: flex; align-items: center; justify-content: center;
-  padding: 48px; background: var(--surface-card); border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg); color: var(--text-tertiary); font-size: 13px;
-}
-
-.form-grid { display: flex; flex-direction: column; gap: 16px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
-
-.form-field { display: flex; flex-direction: column; gap: 6px; }
-.field-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
-.required { color: var(--color-red, #ef4444); }
-
-.field-input {
-  width: 100%; padding: 8px 10px; font-size: 13px;
-  background: var(--surface-inset); border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md); color: var(--text-primary);
-  font-family: var(--font-body); outline: none; transition: border-color .15s;
-  box-sizing: border-box;
-}
-.field-input:focus { border-color: var(--color-primary); }
-.field-textarea { resize: vertical; min-height: 90px; }
-
-.form-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 8px; }
-</style>

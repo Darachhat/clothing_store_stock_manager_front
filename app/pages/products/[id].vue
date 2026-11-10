@@ -1,36 +1,36 @@
 <template>
-  <div class="page-root">
+  <div class="flex flex-col gap-4">
     <!-- Header -->
-    <div class="page-header">
-      <div class="page-header__left">
-        <NuxtLink to="/products" class="back-link">
+    <div class="flex items-start justify-between gap-4 flex-wrap">
+      <div class="flex flex-col gap-0.5">
+        <NuxtLink to="/products" class="inline-flex items-center gap-1 text-xs text-ink-tertiary hover:text-ink no-underline mb-1 transition-colors">
           <UIcon name="i-heroicons-arrow-left" class="w-3.5 h-3.5" />
           Products
         </NuxtLink>
-        <h2 class="page-title">{{ product?.name ?? '…' }}</h2>
-        <p class="page-subtitle">{{ product?.code }}</p>
+        <h2 class="text-base font-semibold text-ink tracking-tight">{{ product?.name ?? '…' }}</h2>
+        <p class="text-xs text-ink-tertiary mt-0.5">{{ product?.code }}</p>
       </div>
-      <div class="page-header__actions">
+      <div class="flex items-center gap-2">
         <AppButton variant="ghost" :to="`/products/${id}/variants`">Manage Variants</AppButton>
         <AppButton variant="default" :to="`/products/${id}/edit`">Edit Product</AppButton>
       </div>
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="state-card">
-      <UIcon name="i-heroicons-arrow-path" class="spinner w-5 h-5" />
+    <div v-if="loading" class="flex items-center justify-center gap-2 p-12 bg-surface-card border border-border-subtle rounded-lg text-ink-tertiary text-xs sm:text-sm">
+      <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 animate-spin" />
       Loading product…
     </div>
 
     <template v-else-if="product">
-      <div class="detail-grid">
+      <div class="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4 items-start">
         <!-- Left: Info -->
-        <div class="detail-col">
+        <div class="flex flex-col gap-4">
           <!-- Product image -->
           <AppCard>
-            <div class="product-image-wrap">
-              <img v-if="product.image_url" :src="product.image_url" :alt="product.name" class="product-image" />
-              <div v-else class="product-image-placeholder">
+            <div class="w-full aspect-square flex items-center justify-center bg-surface-bg rounded-md overflow-hidden border border-border-subtle">
+              <img v-if="product.image_url" :src="product.image_url" :alt="product.name" class="w-full h-full object-cover" />
+              <div v-else class="text-slate-400">
                 <UIcon name="i-heroicons-photo" class="w-10 h-10 text-slate-400" />
               </div>
             </div>
@@ -38,52 +38,52 @@
 
           <!-- Details -->
           <AppCard title="Product Details">
-            <dl class="detail-list">
-              <div class="detail-row">
-                <dt>Code</dt>
-                <dd><code class="mono">{{ product.code }}</code></dd>
+            <dl class="flex flex-col">
+              <div class="flex justify-between items-center py-2 border-b border-border-subtle text-xs sm:text-[13px]">
+                <dt class="text-ink-tertiary">Code</dt>
+                <dd class="text-ink font-medium m-0"><code class="font-mono text-xs">{{ product.code }}</code></dd>
               </div>
-              <div class="detail-row">
-                <dt>Status</dt>
-                <dd>
+              <div class="flex justify-between items-center py-2 border-b border-border-subtle text-xs sm:text-[13px]">
+                <dt class="text-ink-tertiary">Status</dt>
+                <dd class="text-ink font-medium m-0">
                   <AppBadge :color="product.status === 'ACTIVE' ? 'green' : product.status === 'DISCONTINUED' ? 'red' : 'default'">
                     {{ product.status }}
                   </AppBadge>
                 </dd>
               </div>
-              <div class="detail-row">
-                <dt>Category</dt>
-                <dd>{{ product.category?.name ?? '—' }}</dd>
+              <div class="flex justify-between items-center py-2 border-b border-border-subtle text-xs sm:text-[13px]">
+                <dt class="text-ink-tertiary">Category</dt>
+                <dd class="text-ink font-medium m-0">{{ product.category?.name ?? '—' }}</dd>
               </div>
-              <div class="detail-row">
-                <dt>Brand</dt>
-                <dd>{{ product.brand?.name ?? '—' }}</dd>
+              <div class="flex justify-between items-center py-2 border-b border-border-subtle text-xs sm:text-[13px]">
+                <dt class="text-ink-tertiary">Brand</dt>
+                <dd class="text-ink font-medium m-0">{{ product.brand?.name ?? '—' }}</dd>
               </div>
-              <div class="detail-row">
-                <dt>Slug</dt>
-                <dd><code class="mono">{{ product.slug }}</code></dd>
+              <div class="flex justify-between items-center py-2 border-b border-border-subtle text-xs sm:text-[13px]">
+                <dt class="text-ink-tertiary">Slug</dt>
+                <dd class="text-ink font-medium m-0"><code class="font-mono text-xs">{{ product.slug }}</code></dd>
               </div>
-              <div class="detail-row">
-                <dt>Created</dt>
-                <dd>{{ fmtDate(product.created_at || '') }}</dd>
+              <div class="flex justify-between items-center py-2 border-b border-border-subtle text-xs sm:text-[13px]">
+                <dt class="text-ink-tertiary">Created</dt>
+                <dd class="text-ink font-medium m-0">{{ fmtDate(product.created_at || '') }}</dd>
               </div>
-              <div class="detail-row">
-                <dt>Updated</dt>
-                <dd>{{ fmtDate(product.updated_at || '') }}</dd>
+              <div class="flex justify-between items-center py-2 border-b-0 text-xs sm:text-[13px]">
+                <dt class="text-ink-tertiary">Updated</dt>
+                <dd class="text-ink font-medium m-0">{{ fmtDate(product.updated_at || '') }}</dd>
               </div>
             </dl>
           </AppCard>
         </div>
 
         <!-- Right: Description + Variants -->
-        <div class="detail-col">
+        <div class="flex flex-col gap-4">
           <AppCard title="Description">
-            <p v-if="product.description" class="description-text">{{ product.description }}</p>
-            <p v-else class="empty-text">No description.</p>
+            <p v-if="product.description" class="text-xs sm:text-[13px] text-ink-secondary leading-relaxed whitespace-pre-wrap">{{ product.description }}</p>
+            <p v-else class="text-xs sm:text-[13px] text-ink-tertiary italic">No description.</p>
           </AppCard>
 
           <AppCard title="Variants">
-            <div v-if="!product.variants?.length" class="empty-text">No variants yet.</div>
+            <div v-if="!product.variants?.length" class="text-xs sm:text-[13px] text-ink-tertiary italic">No variants yet.</div>
             <AppTable
               v-else
               :columns="variantCols"
@@ -98,7 +98,7 @@
                 ${{ Number(value).toFixed(2) }}
               </template>
             </AppTable>
-            <div style="margin-top:12px;">
+            <div class="mt-3">
               <AppButton variant="default" size="sm" :to="`/products/${id}/variants`">Manage Variants →</AppButton>
             </div>
           </AppCard>
@@ -106,7 +106,7 @@
       </div>
     </template>
 
-    <div v-else class="state-card">Product not found.</div>
+    <div v-else class="flex items-center justify-center gap-2 p-12 bg-surface-card border border-border-subtle rounded-lg text-ink-tertiary text-xs sm:text-sm">Product not found.</div>
   </div>
 </template>
 
@@ -141,90 +141,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style scoped>
-.page-root { display: flex; flex-direction: column; gap: 16px; }
-
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.page-header__left { display: flex; flex-direction: column; gap: 2px; }
-.page-header__actions { display: flex; gap: 8px; align-items: center; }
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-tertiary);
-  text-decoration: none;
-  margin-bottom: 4px;
-}
-.back-link:hover { color: var(--text-primary); }
-
-.page-title { font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.01em; }
-.page-subtitle { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
-
-.state-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 48px;
-  background: var(--surface-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  color: var(--text-tertiary);
-  font-size: 13px;
-}
-
-.spinner { animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 16px;
-  align-items: start;
-}
-@media (max-width: 768px) {
-  .detail-grid { grid-template-columns: 1fr; }
-}
-
-.detail-col { display: flex; flex-direction: column; gap: 16px; }
-
-.product-image-wrap {
-  width: 100%;
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-inset);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-.product-image { width: 100%; height: 100%; object-fit: cover; }
-.product-image-placeholder { color: var(--text-muted); }
-
-.detail-list { display: flex; flex-direction: column; gap: 0; }
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border-subtle);
-  font-size: 13px;
-}
-.detail-row:last-child { border-bottom: none; }
-.detail-row dt { color: var(--text-tertiary); }
-.detail-row dd { color: var(--text-primary); font-weight: 500; }
-
-.mono { font-family: var(--font-mono, monospace); font-size: 12px; }
-
-.description-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; }
-.empty-text { font-size: 13px; color: var(--text-tertiary); font-style: italic; }
-</style>

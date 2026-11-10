@@ -1,140 +1,3 @@
-<template>
-  <aside
-    class="app-sidebar no-print"
-    :class="[
-      isRail ? 'app-sidebar--rail' : 'app-sidebar--full',
-      customClass,
-    ]"
-    :aria-label="ariaLabel || 'Main navigation'"
-  >
-    <!-- ─── Header: Brand Logo & Title ─────────────────────────────── -->
-    <div class="app-sidebar__header">
-      <NuxtLink to="/dashboard" class="app-sidebar__brand" :title="config.public.appName">
-        <div class="app-sidebar__logo-mark">
-          <UIcon name="i-heroicons-building-storefront" class="w-4 h-4 text-white" />
-        </div>
-        <div v-if="!isRail" class="app-sidebar__brand-meta">
-          <span class="app-sidebar__brand-name">{{ config.public.appName }}</span>
-          <span v-if="branchName" class="app-sidebar__brand-branch">{{ branchName }}</span>
-        </div>
-      </NuxtLink>
-
-      <!-- Collapse / Expand Toggle Button (in header for full mode) -->
-      <button
-        v-if="collapsible && !isRail"
-        type="button"
-        class="app-sidebar__toggle-btn"
-        title="Collapse sidebar"
-        @click="toggleCollapse"
-      >
-        <UIcon name="i-heroicons-chevron-left" class="w-4 h-4" />
-      </button>
-    </div>
-
-    <!-- ─── Rail Mode Navigation (Icon Only) ───────────────────────── -->
-    <nav v-if="isRail" class="app-sidebar__rail-nav" aria-label="Quick navigation">
-      <NuxtLink
-        v-for="item in railItems"
-        :key="item.to"
-        :to="item.to"
-        class="app-sidebar__rail-link"
-        :class="{ 'is-active': isActive(item.to) }"
-        :title="item.label + (item.shortcut ? ` [${item.shortcut}]` : '')"
-      >
-        <UIcon :name="item.icon" class="w-5 h-5" />
-        <span v-if="item.badge" class="app-sidebar__rail-badge">{{ item.badge }}</span>
-      </NuxtLink>
-    </nav>
-
-    <!-- ─── Full Mode Navigation (Categorized Sections) ────────────── -->
-    <nav v-else class="app-sidebar__full-nav" aria-label="Categorized navigation">
-      <div v-for="section in navSections" :key="section.title" class="app-sidebar__section">
-        <span class="app-sidebar__section-title">{{ section.title }}</span>
-        <NuxtLink
-          v-for="item in section.items"
-          :key="item.to"
-          :to="item.to"
-          class="app-sidebar__nav-link"
-          :class="{ 'is-active': isActive(item.to) }"
-        >
-          <span class="app-sidebar__icon-box">
-            <UIcon :name="item.icon" class="w-4 h-4" />
-          </span>
-          <span class="app-sidebar__nav-label">{{ item.label }}</span>
-          <span v-if="item.badge" class="app-sidebar__nav-badge">{{ item.badge }}</span>
-          <span v-else-if="item.shortcut" class="app-sidebar__nav-shortcut">{{ item.shortcut }}</span>
-        </NuxtLink>
-      </div>
-    </nav>
-
-    <!-- ─── Bottom Footer Actions ──────────────────────────────────── -->
-    <div class="app-sidebar__footer" :class="{ 'is-rail': isRail }">
-      <!-- Rail-specific bottom icons -->
-      <template v-if="isRail">
-        <!-- Expand button for rail mode -->
-        <button
-          v-if="collapsible"
-          type="button"
-          class="app-sidebar__rail-link app-sidebar__rail-link--toggle"
-          title="Expand sidebar"
-          @click="toggleCollapse"
-        >
-          <UIcon name="i-heroicons-chevron-right" class="w-5 h-5" />
-        </button>
-
-        <button
-          v-if="showShortcuts"
-          type="button"
-          class="app-sidebar__rail-link"
-          title="Keyboard Shortcuts [?]"
-          @click="$emit('shortcuts')"
-        >
-          <UIcon name="i-heroicons-question-mark-circle" class="w-5 h-5" />
-        </button>
-
-        <NuxtLink
-          to="/settings"
-          class="app-sidebar__rail-link"
-          :class="{ 'is-active': isActive('/settings') }"
-          title="System Settings"
-        >
-          <UIcon name="i-heroicons-cog-6-tooth" class="w-5 h-5" />
-        </NuxtLink>
-
-        <button
-          type="button"
-          class="app-sidebar__rail-link app-sidebar__rail-link--danger"
-          title="Sign Out"
-          @click="onLogout"
-        >
-          <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-5 h-5" />
-        </button>
-      </template>
-
-      <!-- Full mode user card -->
-      <template v-else>
-        <div class="app-sidebar__user">
-          <div class="app-sidebar__user-avatar">
-            {{ userInitials }}
-          </div>
-          <div class="app-sidebar__user-info">
-            <div class="app-sidebar__user-name" :title="userName">{{ userName }}</div>
-            <div class="app-sidebar__user-role">{{ userRole }}</div>
-          </div>
-          <button
-            type="button"
-            class="app-sidebar__logout-btn"
-            title="Sign Out"
-            @click="onLogout"
-          >
-            <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-4 h-4" />
-          </button>
-        </div>
-      </template>
-    </div>
-  </aside>
-</template>
-
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter, useRuntimeConfig } from '#app'
@@ -255,346 +118,138 @@ async function onLogout() {
 }
 </script>
 
-<style scoped>
-.app-sidebar {
-  background: var(--surface-card, #ffffff);
-  border-right: 1px solid var(--border-subtle, #e5e7eb);
-  display: flex;
-  flex-direction: column;
-  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  user-select: none;
-  z-index: 20;
-  height: 100%;
-}
+<template>
+  <aside
+    class="bg-surface-card border-r border-border-subtle flex flex-col transition-all duration-200 select-none z-20 h-full no-print"
+    :class="[
+      isRail ? 'w-14 min-w-[56px]' : 'w-60 min-w-[240px]',
+      customClass,
+    ]"
+    :aria-label="ariaLabel || 'Main navigation'"
+  >
+    <!-- ─── Header: Brand Logo & Title ─────────────────────────────── -->
+    <div class="flex items-center justify-between h-14 px-3 border-b border-border-subtle shrink-0">
+      <NuxtLink to="/dashboard" class="flex items-center gap-2.5 min-w-0 no-underline text-ink" :title="config.public.appName">
+        <div class="w-8 h-8 rounded-md bg-brand-900 flex items-center justify-center shrink-0">
+          <UIcon name="i-heroicons-building-storefront" class="w-4 h-4 text-white" />
+        </div>
+        <div v-if="!isRail" class="flex flex-col min-w-0">
+          <span class="text-xs font-bold text-ink truncate leading-tight">{{ config.public.appName }}</span>
+          <span v-if="branchName" class="text-[10px] text-ink-tertiary truncate leading-tight">{{ branchName }}</span>
+        </div>
+      </NuxtLink>
 
-.app-sidebar--full {
-  width: 220px;
-  min-width: 220px;
-}
+      <!-- Collapse / Expand Toggle Button -->
+      <button
+        v-if="collapsible && !isRail"
+        type="button"
+        class="w-7 h-7 rounded flex items-center justify-center text-ink-tertiary hover:text-ink hover:bg-surface-hover cursor-pointer transition-colors border-none bg-transparent"
+        title="Collapse sidebar"
+        @click="toggleCollapse"
+      >
+        <UIcon name="i-heroicons-chevron-left" class="w-4 h-4" />
+      </button>
+    </div>
 
-.app-sidebar--rail {
-  width: 56px;
-  min-width: 56px;
-  align-items: center;
-}
+    <!-- ─── Rail Mode Navigation (Icon Only) ───────────────────────── -->
+    <nav v-if="isRail" class="flex-1 flex flex-col items-center py-2 gap-1 overflow-y-auto" aria-label="Quick navigation">
+      <NuxtLink
+        v-for="item in railItems"
+        :key="item.to"
+        :to="item.to"
+        class="relative w-10 h-10 rounded-md flex items-center justify-center text-ink-secondary hover:text-ink hover:bg-surface-hover transition-colors no-underline cursor-pointer"
+        :class="{ '!bg-surface-active !text-ink': isActive(item.to) }"
+        :title="item.label + (item.shortcut ? ` [${item.shortcut}]` : '')"
+      >
+        <UIcon :name="item.icon" class="w-5 h-5" />
+        <span v-if="item.badge" class="absolute top-1 right-1 px-1 min-w-[14px] h-3.5 bg-brand-900 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{{ item.badge }}</span>
+      </NuxtLink>
+    </nav>
 
-/* Header */
-.app-sidebar__header {
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
-  flex-shrink: 0;
-  width: 100%;
-}
+    <!-- ─── Full Mode Navigation (Categorized Sections) ────────────── -->
+    <nav v-else class="flex-1 overflow-y-auto py-3 px-2 flex flex-col gap-4" aria-label="Categorized navigation">
+      <div v-for="section in navSections" :key="section.title" class="flex flex-col gap-0.5">
+        <span class="px-2.5 text-[10px] font-bold text-ink-tertiary uppercase tracking-wider mb-1">{{ section.title }}</span>
+        <NuxtLink
+          v-for="item in section.items"
+          :key="item.to"
+          :to="item.to"
+          class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-ink-secondary hover:text-ink hover:bg-surface-hover transition-colors no-underline"
+          :class="{ '!bg-surface-active !text-ink font-semibold': isActive(item.to) }"
+        >
+          <span class="w-4 h-4 flex items-center justify-center text-inherit">
+            <UIcon :name="item.icon" class="w-4 h-4" />
+          </span>
+          <span class="flex-1 truncate">{{ item.label }}</span>
+          <span v-if="item.badge" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-brand-900 text-white">{{ item.badge }}</span>
+          <span v-else-if="item.shortcut" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-ink-tertiary bg-surface-hover border border-border-subtle">{{ item.shortcut }}</span>
+        </NuxtLink>
+      </div>
+    </nav>
 
-.app-sidebar--rail .app-sidebar__header {
-  padding: 0;
-  justify-content: center;
-}
+    <!-- ─── Bottom Footer Actions ──────────────────────────────────── -->
+    <div class="border-t border-border-subtle p-2 shrink-0 flex flex-col gap-1" :class="{ 'items-center': isRail }">
+      <!-- Rail-specific bottom icons -->
+      <template v-if="isRail">
+        <button
+          v-if="collapsible"
+          type="button"
+          class="w-10 h-10 rounded-md flex items-center justify-center text-ink-secondary hover:text-ink hover:bg-surface-hover transition-colors border-none bg-transparent cursor-pointer"
+          title="Expand sidebar"
+          @click="toggleCollapse"
+        >
+          <UIcon name="i-heroicons-chevron-right" class="w-5 h-5" />
+        </button>
 
-.app-sidebar__brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  min-width: 0;
-  flex: 1;
-}
+        <button
+          v-if="showShortcuts"
+          type="button"
+          class="w-10 h-10 rounded-md flex items-center justify-center text-ink-secondary hover:text-ink hover:bg-surface-hover transition-colors border-none bg-transparent cursor-pointer"
+          title="Keyboard Shortcuts [?]"
+          @click="$emit('shortcuts')"
+        >
+          <UIcon name="i-heroicons-question-mark-circle" class="w-5 h-5" />
+        </button>
 
-.app-sidebar--rail .app-sidebar__brand {
-  flex: none;
-}
+        <NuxtLink
+          to="/settings"
+          class="w-10 h-10 rounded-md flex items-center justify-center text-ink-secondary hover:text-ink hover:bg-surface-hover transition-colors no-underline cursor-pointer"
+          :class="{ '!bg-surface-active !text-ink': isActive('/settings') }"
+          title="System Settings"
+        >
+          <UIcon name="i-heroicons-cog-6-tooth" class="w-5 h-5" />
+        </NuxtLink>
 
-.app-sidebar__logo-mark {
-  width: 32px;
-  height: 32px;
-  background: var(--brand-900, #111827);
-  border-radius: var(--radius-md, 8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
+        <button
+          type="button"
+          class="w-10 h-10 rounded-md flex items-center justify-center text-ink-secondary hover:text-status-red hover:bg-surface-hover transition-colors border-none bg-transparent cursor-pointer"
+          title="Sign Out"
+          @click="onLogout"
+        >
+          <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-5 h-5" />
+        </button>
+      </template>
 
-.app-sidebar__brand-meta {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.app-sidebar__brand-name {
-  font-size: var(--text-sm, 13px);
-  font-weight: 600;
-  color: var(--text-primary, #111827);
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.app-sidebar__brand-branch {
-  font-size: 10px;
-  color: var(--text-tertiary, #6b7280);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.app-sidebar__toggle-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-sm, 4px);
-  background: transparent;
-  border: 1px solid transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--text-tertiary, #6b7280);
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-
-.app-sidebar__toggle-btn:hover {
-  background: var(--surface-hover, #f3f4f6);
-  color: var(--text-primary, #111827);
-}
-
-/* Full Nav */
-.app-sidebar__full-nav {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.app-sidebar__full-nav::-webkit-scrollbar {
-  width: 4px;
-}
-.app-sidebar__full-nav::-webkit-scrollbar-thumb {
-  background: var(--border-subtle, #e5e7eb);
-  border-radius: 4px;
-}
-
-.app-sidebar__section {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.app-sidebar__section-title {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-tertiary, #9ca3af);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 6px 8px 2px;
-}
-
-.app-sidebar__nav-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 32px;
-  padding: 0 8px;
-  border-radius: var(--radius-sm, 6px);
-  font-size: var(--text-sm, 13px);
-  font-weight: 500;
-  color: var(--text-secondary, #4b5563);
-  text-decoration: none;
-  transition: background 0.12s, color 0.12s;
-  position: relative;
-}
-
-.app-sidebar__nav-link:hover {
-  background: var(--surface-hover, #f3f4f6);
-  color: var(--text-primary, #111827);
-}
-
-.app-sidebar__nav-link.is-active {
-  background: var(--surface-active, #f3f4f6);
-  color: var(--text-primary, #111827);
-  font-weight: 600;
-}
-
-.app-sidebar__icon-box {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: currentColor;
-}
-
-.app-sidebar__nav-label {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.app-sidebar__nav-shortcut {
-  font-size: 10px;
-  font-family: monospace;
-  background: var(--surface-hover, #e5e7eb);
-  color: var(--text-tertiary, #6b7280);
-  padding: 1px 4px;
-  border-radius: 3px;
-}
-
-.app-sidebar__nav-badge {
-  font-size: 10px;
-  font-weight: 600;
-  background: var(--brand-900, #111827);
-  color: #fff;
-  padding: 1px 6px;
-  border-radius: 999px;
-}
-
-/* Rail Nav */
-.app-sidebar__rail-nav {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 100%;
-  padding: 10px 0;
-  overflow-y: auto;
-}
-
-.app-sidebar__rail-nav::-webkit-scrollbar {
-  width: 0;
-}
-
-.app-sidebar__rail-link {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md, 8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-tertiary, #6b7280);
-  text-decoration: none;
-  position: relative;
-  transition: all 0.15s;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.app-sidebar__rail-link:hover {
-  background: var(--surface-hover, #f3f4f6);
-  color: var(--text-primary, #111827);
-}
-
-.app-sidebar__rail-link.is-active {
-  background: var(--surface-active, #e5e7eb);
-  color: var(--text-primary, #111827);
-}
-
-.app-sidebar__rail-link--toggle {
-  color: var(--text-secondary, #4b5563);
-}
-
-.app-sidebar__rail-link--toggle:hover {
-  background: var(--brand-900, #111827);
-  color: #ffffff;
-}
-
-.app-sidebar__rail-link--danger:hover {
-  color: #ef4444;
-  background: #fef2f2;
-}
-
-.app-sidebar__rail-badge {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #ef4444;
-}
-
-/* Footer */
-.app-sidebar__footer {
-  border-top: 1px solid var(--border-subtle, #e5e7eb);
-  flex-shrink: 0;
-  width: 100%;
-}
-
-.app-sidebar__footer.is-rail {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 0;
-}
-
-.app-sidebar__user {
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.app-sidebar__user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--brand-900, #111827);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.app-sidebar__user-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.app-sidebar__user-name {
-  font-size: var(--text-sm, 13px);
-  font-weight: 600;
-  color: var(--text-primary, #111827);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.app-sidebar__user-role {
-  font-size: 11px;
-  color: var(--text-tertiary, #6b7280);
-}
-
-.app-sidebar__logout-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm, 4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--text-tertiary, #6b7280);
-  background: none;
-  border: none;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-
-.app-sidebar__logout-btn:hover {
-  background: var(--surface-hover, #f3f4f6);
-  color: #ef4444;
-}
-</style>
+      <!-- Full mode user card -->
+      <template v-else>
+        <div class="flex items-center gap-2 p-1.5 rounded-md hover:bg-surface-hover transition-colors">
+          <div class="w-7 h-7 rounded-full bg-brand-900 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+            {{ userInitials }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-semibold text-ink truncate leading-tight" :title="userName">{{ userName }}</div>
+            <div class="text-[10px] text-ink-tertiary truncate leading-tight">{{ userRole }}</div>
+          </div>
+          <button
+            type="button"
+            class="w-7 h-7 rounded flex items-center justify-center text-ink-tertiary hover:text-status-red hover:bg-surface-hover cursor-pointer transition-colors border-none bg-transparent shrink-0"
+            title="Sign Out"
+            @click="onLogout"
+          >
+            <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-4 h-4" />
+          </button>
+        </div>
+      </template>
+    </div>
+  </aside>
+</template>

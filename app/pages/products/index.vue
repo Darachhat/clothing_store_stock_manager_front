@@ -1,10 +1,10 @@
 <template>
-  <div class="page-root">
+  <div class="flex flex-col gap-4">
     <!-- Header -->
-    <div class="page-header">
+    <div class="flex items-start justify-between gap-4">
       <div>
-        <h2 class="page-title">Products</h2>
-        <p class="page-subtitle">Manage your product catalog</p>
+        <h2 class="text-base font-semibold text-ink tracking-tight">Products</h2>
+        <p class="text-xs text-ink-tertiary mt-0.5">Manage your product catalog</p>
       </div>
       <AppButton variant="primary" to="/products/new">
         <template #icon-left>
@@ -15,12 +15,12 @@
     </div>
 
     <!-- Filters -->
-    <div class="filter-bar">
-      <div class="filter-bar__search">
-        <UIcon name="i-heroicons-magnifying-glass" class="w-3.5 h-3.5" style="color:var(--text-tertiary); flex-shrink:0;" />
+    <div class="flex items-center gap-2 p-3 sm:px-4 bg-surface-card border border-border-subtle rounded-lg flex-wrap">
+      <div class="flex items-center gap-2 flex-1 min-w-[200px] h-9 px-2.5 bg-surface-card border border-border-default rounded-md">
+        <UIcon name="i-heroicons-magnifying-glass" class="w-3.5 h-3.5 text-ink-tertiary shrink-0" />
         <input
           v-model="search"
-          class="filter-bar__input"
+          class="w-full bg-transparent border-none text-xs sm:text-sm text-ink outline-none placeholder:text-ink-tertiary"
           placeholder="Search products…"
         />
       </div>
@@ -28,7 +28,7 @@
         v-model="statusFilter"
         :options="statusOptions"
         placeholder="All Statuses"
-        style="width:160px;"
+        class="w-40"
       />
       <AppButton variant="ghost" size="sm" @click="clearFilters">Clear</AppButton>
     </div>
@@ -47,7 +47,7 @@
           </AppBadge>
         </template>
         <template #actions="{ row }">
-          <div style="display:flex; gap:4px; justify-content:flex-end;">
+          <div class="flex items-center gap-1 justify-end">
             <AppButton :to="`/products/${row.id}`" variant="ghost" size="sm">View</AppButton>
             <AppButton :to="`/products/${row.id}/edit`" variant="ghost" size="sm">Edit</AppButton>
             <AppButton :to="`/products/${row.id}/variants`" variant="default" size="sm">Variants</AppButton>
@@ -102,59 +102,3 @@ const debouncedLoad = useDebounceFn(async () => {
 
 watch([search, statusFilter], debouncedLoad, { immediate: true })
 </script>
-
-<style scoped>
-.page-root { display: flex; flex-direction: column; gap: 16px; }
-
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.page-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-}
-
-.page-subtitle {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  margin-top: 2px;
-  max-width: none;
-}
-
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: var(--surface-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-}
-
-.filter-bar__search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-}
-
-.filter-bar__input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: var(--text-primary);
-  background: transparent;
-  min-width: 0;
-}
-
-.filter-bar__input::placeholder { color: var(--text-tertiary); }
-</style>

@@ -1,21 +1,21 @@
 <template>
-  <div class="page-root">
+  <div class="flex flex-col gap-4">
     <!-- Header -->
-    <div class="page-header">
-      <div class="page-header__left">
-        <NuxtLink :to="`/products/${id}`" class="back-link">
+    <div class="flex items-start justify-between gap-4 flex-wrap">
+      <div class="flex flex-col gap-0.5">
+        <NuxtLink :to="`/products/${id}`" class="inline-flex items-center gap-1 text-xs text-ink-tertiary hover:text-ink no-underline mb-1 transition-colors">
           <UIcon name="i-heroicons-arrow-left" class="w-3.5 h-3.5" />
           {{ product?.name ?? 'Product' }}
         </NuxtLink>
-        <h2 class="page-title">Product Variants</h2>
-        <p class="page-subtitle">Manage sizes, colors, SKUs, barcodes, and Khmer garment stickers</p>
+        <h2 class="text-base font-semibold text-ink tracking-tight">Product Variants</h2>
+        <p class="text-xs text-ink-tertiary mt-0.5">Manage sizes, colors, SKUs, barcodes, and Khmer garment stickers</p>
       </div>
-      <div class="page-header__actions">
+      <div class="flex items-center gap-2 flex-wrap">
         <AppButton variant="default" :to="`/labels/generate?product_id=${id}`">
           <template #icon-left>
             <UIcon name="i-heroicons-tag" class="w-3.5 h-3.5" />
           </template>
-          <span class="kh-text">បោះពុម្ពស្លាកទំនិញ (Print Product Label)</span>
+          <span class="font-khmer">បោះពុម្ពស្លាកទំនិញ (Print Product Label)</span>
         </AppButton>
         <AppButton variant="primary" @click="openCreate">
           <template #icon-left>
@@ -35,8 +35,8 @@
         empty-text="No variants yet. Add your first variant."
       >
         <template #cell-color="{ row }">
-          <div class="color-cell">
-            <span v-if="row.color?.hex_code" class="color-dot" :style="{ background: row.color.hex_code }" />
+          <div class="flex items-center gap-1.5">
+            <span v-if="row.color?.hex_code" class="inline-block w-2.5 h-2.5 rounded-full border border-border-subtle shrink-0" :style="{ background: row.color.hex_code }" />
             {{ row.color?.name ?? '—' }}
           </div>
         </template>
@@ -46,12 +46,12 @@
           <AppBadge :color="value === 'ACTIVE' ? 'green' : 'default'">{{ value }}</AppBadge>
         </template>
         <template #actions="{ row }">
-          <div style="display:flex;gap:4px;justify-content:flex-end;">
+          <div class="flex items-center gap-1 justify-end">
             <AppButton variant="default" size="sm" @click="openQr(row)">
               <template #icon-left>
                 <UIcon name="i-heroicons-tag" class="w-3.5 h-3.5" />
               </template>
-              <span class="kh-text">ស្លាកទំនិញ / Barcode</span>
+              <span class="font-khmer">ស្លាកទំនិញ / Barcode</span>
             </AppButton>
             <AppButton variant="ghost" size="sm" @click="openEdit(row)">Edit</AppButton>
             <AppButton variant="ghost" size="sm" @click="confirmDelete(row)">Delete</AppButton>
@@ -62,46 +62,46 @@
 
     <!-- Create / Edit Modal -->
     <AppModal v-model="showForm" :title="editTarget ? 'Edit Variant' : 'Add Variant'" size="lg">
-      <form class="form-grid" @submit.prevent="saveVariant">
-        <div class="form-row">
-          <div class="form-field">
-            <label class="field-label">Color</label>
+      <form class="flex flex-col gap-3.5" @submit.prevent="saveVariant">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-ink-secondary">Color</label>
             <AppSelect v-model="form.color_id" :options="colorOptions" placeholder="Select color" />
           </div>
-          <div class="form-field">
-            <label class="field-label">Size</label>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-ink-secondary">Size</label>
             <AppSelect v-model="form.size_id" :options="sizeOptions" placeholder="Select size" />
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-field">
-            <label class="field-label">Cost Price ($)</label>
-            <input v-model.number="form.cost_price" type="number" step="0.01" min="0" class="field-input" required />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-ink-secondary">Cost Price ($)</label>
+            <input v-model.number="form.cost_price" type="number" step="0.01" min="0" class="w-full px-2.5 py-2 text-xs sm:text-sm bg-surface-card border border-border-default rounded-md text-ink outline-none focus:border-ink transition-colors" required />
           </div>
-          <div class="form-field">
-            <label class="field-label">Selling Price ($) <span class="required">*</span></label>
-            <input v-model.number="form.selling_price" type="number" step="0.01" min="0" class="field-input" required />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-field">
-            <label class="field-label">Wholesale Price ($)</label>
-            <input v-model.number="form.wholesale_price" type="number" step="0.01" min="0" class="field-input" />
-          </div>
-          <div class="form-field">
-            <label class="field-label">Barcode</label>
-            <input v-model="form.barcode" class="field-input" placeholder="Optional" />
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-ink-secondary">Selling Price ($) <span class="text-status-red">*</span></label>
+            <input v-model.number="form.selling_price" type="number" step="0.01" min="0" class="w-full px-2.5 py-2 text-xs sm:text-sm bg-surface-card border border-border-default rounded-md text-ink outline-none focus:border-ink transition-colors" required />
           </div>
         </div>
 
-        <div class="form-field">
-          <label class="field-label">Status</label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-ink-secondary">Wholesale Price ($)</label>
+            <input v-model.number="form.wholesale_price" type="number" step="0.01" min="0" class="w-full px-2.5 py-2 text-xs sm:text-sm bg-surface-card border border-border-default rounded-md text-ink outline-none focus:border-ink transition-colors" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium text-ink-secondary">Barcode</label>
+            <input v-model="form.barcode" class="w-full px-2.5 py-2 text-xs sm:text-sm bg-surface-card border border-border-default rounded-md text-ink outline-none focus:border-ink transition-colors" placeholder="Optional" />
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-ink-secondary">Status</label>
           <AppSelect v-model="form.status" :options="statusOptions" />
         </div>
 
-        <div class="modal-actions">
+        <div class="flex justify-end gap-2 pt-2 border-t border-border-subtle">
           <AppButton type="button" variant="ghost" @click="showForm = false">Cancel</AppButton>
           <AppButton type="submit" variant="primary" :loading="saving">
             {{ editTarget ? 'Save Changes' : 'Create Variant' }}
@@ -112,9 +112,9 @@
 
     <!-- Sticker & Barcode Modal (Template C: Modern Khmer Product Sticker 50x30mm) -->
     <AppModal v-model="showQr" title="ស្លាកទំនិញ • Modern Khmer Product Sticker (50 × 30mm)" size="md">
-      <div v-if="qrVariant" class="sticker-modal-wrap">
+      <div v-if="qrVariant" class="flex flex-col items-center gap-4 p-2">
         <!-- Live 50x30mm Khmer Sticker Card Preview -->
-        <div class="sticker-preview-stage">
+        <div class="bg-slate-100 border border-border-subtle rounded-md p-5 w-full flex justify-center">
           <div class="kh-product-sticker" style="--sticker-w: 50mm; --sticker-h: 30mm;">
             <div class="kh-sticker__store">
               គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ 
@@ -125,7 +125,7 @@
             <div class="kh-sticker__info-row">
               <div class="kh-sticker__meta">
                 <div class="kh-sticker__sku-line">
-                  SKU: <span class="mono font-bold">{{ qrVariant.sku }}</span>
+                  SKU: <span class="font-mono font-bold">{{ qrVariant.sku }}</span>
                 </div>
                 <div class="kh-sticker__variant-line">
                   <span>ពណ៌: <strong>{{ qrVariant.color?.name || 'ទូទៅ' }}</strong></span>
@@ -147,7 +147,7 @@
           </div>
         </div>
 
-        <div class="qr-actions">
+        <div class="flex items-center gap-2 flex-wrap justify-center">
           <a :href="barcodeUrl" :download="`${qrVariant.sku}-barcode.svg`" target="_blank">
             <AppButton variant="default" size="sm">
               <template #icon-left>
@@ -160,7 +160,7 @@
             <template #icon-left>
               <UIcon name="i-heroicons-printer" class="w-3.5 h-3.5" />
             </template>
-            <span class="kh-text">បោះពុម្ពស្លាកទំនិញ (Print Product Label)</span>
+            <span class="font-khmer">បោះពុម្ពស្លាកទំនិញ (Print Product Label)</span>
           </AppButton>
         </div>
       </div>
@@ -315,48 +315,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style scoped>
-.kh-text {
-  font-family: 'Kantumruy Pro', 'Battambang', 'Battambang Local', 'Noto Sans Khmer', sans-serif;
-}
-
-.page-root { display: flex; flex-direction: column; gap: 16px; }
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.page-header__left { display: flex; flex-direction: column; gap: 2px; }
-.page-header__actions { display: flex; gap: 8px; align-items: center; }
-
-.back-link {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 12px; color: var(--text-tertiary); text-decoration: none; margin-bottom: 4px;
-}
-.back-link:hover { color: var(--text-primary); }
-.page-title { font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.01em; }
-.page-subtitle { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
-
-.color-cell { display: flex; align-items: center; gap: 6px; }
-.color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--border-subtle); flex-shrink: 0; }
-
-.form-grid { display: flex; flex-direction: column; gap: 14px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (max-width: 580px) { .form-row { grid-template-columns: 1fr; } }
-.form-field { display: flex; flex-direction: column; gap: 5px; }
-.field-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
-.required { color: #ef4444; }
-.field-input {
-  padding: 8px 10px; font-size: 13px; background: var(--surface-inset);
-  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
-  color: var(--text-primary); font-family: var(--font-body); outline: none;
-  transition: border-color .15s; box-sizing: border-box; width: 100%;
-}
-.field-input:focus { border-color: var(--color-primary); }
-.modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 8px; }
-
-.sticker-modal-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 8px; }
-.sticker-preview-stage {
-  background: #f1f5f9; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
-  padding: 20px; width: 100%; display: flex; justify-content: center;
-}
-.mono { font-family: monospace; }
-.qr-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-</style>

@@ -1,49 +1,49 @@
 <template>
-  <div class="page-root">
-    <div class="page-header">
+  <div class="flex flex-col gap-4">
+    <div class="flex items-start justify-between gap-4">
       <div>
-        <h2 class="page-title">Purchases Report</h2>
-        <p class="page-subtitle">Procurement cost breakdown by period</p>
+        <h2 class="text-base font-semibold text-ink tracking-tight">Purchases Report</h2>
+        <p class="text-xs text-ink-tertiary mt-0.5">Procurement cost breakdown by period</p>
       </div>
       <AppButton variant="default" @click="exportCsv">Export CSV</AppButton>
     </div>
 
     <!-- Filters -->
     <AppCard>
-      <div class="filter-bar">
-        <div class="form-field">
-          <label class="field-label">From</label>
-          <input v-model="fromDate" type="date" class="field-input" />
+      <div class="flex items-end gap-3 flex-wrap">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-ink-secondary">From</label>
+          <input v-model="fromDate" type="date" class="px-2.5 py-2 text-xs sm:text-sm bg-surface-card border border-border-default rounded-md text-ink outline-none focus:border-ink transition-colors" />
         </div>
-        <div class="form-field">
-          <label class="field-label">To</label>
-          <input v-model="toDate" type="date" class="field-input" />
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-ink-secondary">To</label>
+          <input v-model="toDate" type="date" class="px-2.5 py-2 text-xs sm:text-sm bg-surface-card border border-border-default rounded-md text-ink outline-none focus:border-ink transition-colors" />
         </div>
-        <div class="form-field">
-          <label class="field-label">Group By</label>
-          <AppSelect v-model="groupBy" :options="groupByOptions" style="width:130px;" />
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-medium text-ink-secondary">Group By</label>
+          <AppSelect v-model="groupBy" :options="groupByOptions" class="w-32" />
         </div>
         <AppButton variant="primary" :loading="loading" @click="fetchReport">Run Report</AppButton>
       </div>
     </AppCard>
 
     <!-- KPIs -->
-    <div class="kpi-grid">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
       <AppCard>
-        <p class="kpi-label">Total Cost</p>
-        <p class="kpi-value">${{ summary.totalCost }}</p>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-ink-tertiary mb-1">Total Cost</p>
+        <p class="text-2xl font-bold text-ink tracking-tight m-0">${{ summary.totalCost }}</p>
       </AppCard>
       <AppCard>
-        <p class="kpi-label">Orders</p>
-        <p class="kpi-value">{{ summary.orders }}</p>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-ink-tertiary mb-1">Orders</p>
+        <p class="text-2xl font-bold text-ink tracking-tight m-0">{{ summary.orders }}</p>
       </AppCard>
       <AppCard>
-        <p class="kpi-label">Items Purchased</p>
-        <p class="kpi-value">{{ summary.items }}</p>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-ink-tertiary mb-1">Items Purchased</p>
+        <p class="text-2xl font-bold text-ink tracking-tight m-0">{{ summary.items }}</p>
       </AppCard>
       <AppCard>
-        <p class="kpi-label">Avg. Order Cost</p>
-        <p class="kpi-value">${{ summary.avgCost }}</p>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-ink-tertiary mb-1">Avg. Order Cost</p>
+        <p class="text-2xl font-bold text-ink tracking-tight m-0">${{ summary.avgCost }}</p>
       </AppCard>
     </div>
 
@@ -51,7 +51,7 @@
     <AppCard :no-pad="true">
       <AppTable :columns="columns" :rows="rows" :loading="loading" empty-text="Run a report to see data.">
         <template #cell-total_cost="{ value }">
-          <span class="cost-value">${{ Number(value).toFixed(2) }}</span>
+          <span class="font-semibold text-brand-900">${{ Number(value).toFixed(2) }}</span>
         </template>
       </AppTable>
     </AppCard>
@@ -123,25 +123,3 @@ function exportCsv() {
 
 onMounted(fetchReport)
 </script>
-
-<style scoped>
-.page-root { display: flex; flex-direction: column; gap: 16px; }
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.page-title { font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.01em; }
-.page-subtitle { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
-
-.filter-bar { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-.form-field { display: flex; flex-direction: column; gap: 5px; }
-.field-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
-.field-input { padding: 8px 10px; font-size: 13px; background: var(--surface-inset); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: var(--text-primary); outline: none; transition: border-color .15s; }
-.field-input:focus { border-color: var(--color-primary); }
-
-.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-@media (max-width: 768px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 480px) { .kpi-grid { grid-template-columns: 1fr; } }
-
-.kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary); margin-bottom: 4px; }
-.kpi-value { font-size: 24px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
-
-.cost-value { font-weight: 600; color: var(--color-primary, #6366f1); }
-</style>
