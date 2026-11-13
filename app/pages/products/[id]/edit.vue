@@ -29,11 +29,11 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-ink-secondary">Category</label>
+              <label class="text-xs font-medium text-ink-secondary">CATEGORY_MODEL</label>
               <AppSelect v-model="form.category_id" :options="categoryOptions" placeholder="Select category" />
             </div>
             <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-ink-secondary">Brand</label>
+              <label class="text-xs font-medium text-ink-secondary">BRAND_MODEL</label>
               <AppSelect v-model="form.brand_id" :options="brandOptions" placeholder="Select brand" />
             </div>
           </div>
@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Product, Category, Brand, Supplier } from '~/types'
+import type { Product, CATEGORY_MODEL, BRAND_MODEL, Supplier } from '~/types'
 
 definePageMeta({ middleware: ['auth'] })
 
@@ -136,8 +136,8 @@ onMounted(async () => {
       supplier_id: p.supplier_id ?? '',
       status: p.status,
     })
-    categoryOptions.value = (cats as Category[]).map(c => ({ label: c.name, value: c.id }))
-    brandOptions.value = (brands as Brand[]).map(b => ({ label: b.name, value: b.id }))
+    categoryOptions.value = (cats as CATEGORY_MODEL[]).map(c => ({ label: c.name, value: c.id }))
+    brandOptions.value = (brands as BRAND_MODEL[]).map(b => ({ label: b.name, value: b.id }))
     supplierOptions.value = (suppliers as Supplier[]).map(s => ({ label: s.name, value: s.id }))
   } finally {
     loading.value = false

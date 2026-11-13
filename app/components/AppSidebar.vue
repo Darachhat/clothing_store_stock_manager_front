@@ -127,7 +127,7 @@ async function onLogout() {
     ]"
     :aria-label="ariaLabel || 'Main navigation'"
   >
-    <!-- ─── Header: Brand Logo & Title ─────────────────────────────── -->
+    <!-- ─── Header: BRAND_MODEL Logo & Title ─────────────────────────────── -->
     <div class="flex items-center justify-between h-14 px-3 border-b border-border-subtle shrink-0">
       <NuxtLink to="/dashboard" class="flex items-center gap-2.5 min-w-0 no-underline text-ink" :title="config.public.appName">
         <div class="w-8 h-8 rounded-md bg-brand-900 flex items-center justify-center shrink-0">

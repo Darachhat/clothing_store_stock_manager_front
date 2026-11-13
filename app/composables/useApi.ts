@@ -8,8 +8,8 @@ import type {
   ProductUpdate,
   ProductVariant,
   ProductPagination,
-  Category,
-  Brand,
+  CATEGORY_MODEL,
+  BRAND_MODEL,
   Color,
   Size,
   Supplier,
@@ -59,6 +59,11 @@ export function useProductApi() {
       apiFetch<ProductVariant>(API_ENDPOINTS.products.byBarcode(barcode)),
     searchBySku: (sku: string) =>
       apiFetch<ProductVariant>(API_ENDPOINTS.products.bySku(sku)),
+    scanCode: (code: string) =>
+      apiFetch<any>(API_ENDPOINTS.products.variantScan, {
+        params: { code },
+        query: { code },
+      }),
   }
 }
 
@@ -115,20 +120,20 @@ export function useCatalogApi() {
 
   return {
     listCategories: (params?: Record<string, unknown>) =>
-      apiFetch<Category[]>(API_ENDPOINTS.catalog.categories, { params, query: params }),
+      apiFetch<CATEGORY_MODEL[]>(API_ENDPOINTS.catalog.categories, { params, query: params }),
     createCategory: (body: unknown) =>
-      apiFetch<Category>(API_ENDPOINTS.catalog.categories, { method: 'POST', body: body as any }),
+      apiFetch<CATEGORY_MODEL>(API_ENDPOINTS.catalog.categories, { method: 'POST', body: body as any }),
     updateCategory: (id: string, body: unknown) =>
-      apiFetch<Category>(API_ENDPOINTS.catalog.categoryDetail(id), { method: 'PUT', body: body as any }),
+      apiFetch<CATEGORY_MODEL>(API_ENDPOINTS.catalog.categoryDetail(id), { method: 'PUT', body: body as any }),
     deleteCategory: (id: string) =>
       apiFetch(API_ENDPOINTS.catalog.categoryDetail(id), { method: 'DELETE' }),
 
     listBrands: (params?: Record<string, unknown>) =>
-      apiFetch<Brand[]>(API_ENDPOINTS.catalog.brands, { params, query: params }),
+      apiFetch<BRAND_MODEL[]>(API_ENDPOINTS.catalog.brands, { params, query: params }),
     createBrand: (body: unknown) =>
-      apiFetch<Brand>(API_ENDPOINTS.catalog.brands, { method: 'POST', body: body as any }),
+      apiFetch<BRAND_MODEL>(API_ENDPOINTS.catalog.brands, { method: 'POST', body: body as any }),
     updateBrand: (id: string, body: unknown) =>
-      apiFetch<Brand>(API_ENDPOINTS.catalog.brandDetail(id), { method: 'PUT', body: body as any }),
+      apiFetch<BRAND_MODEL>(API_ENDPOINTS.catalog.brandDetail(id), { method: 'PUT', body: body as any }),
     deleteBrand: (id: string) =>
       apiFetch(API_ENDPOINTS.catalog.brandDetail(id), { method: 'DELETE' }),
 

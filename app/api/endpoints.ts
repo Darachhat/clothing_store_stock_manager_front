@@ -18,12 +18,13 @@ export const API_ENDPOINTS = {
     detail: (id: string) => `/api/admin/v1/products/${id}`,
     variants: (id: string) => `/api/admin/v1/products/${id}/variants`,
     variantDetail: (id: string) => `/api/admin/v1/product-variants/${id}`,
+    variantScan: '/api/admin/v1/product-variants/scan',
     qr: (id: string, format = 'svg') => `/api/admin/v1/product-variants/${id}/qr?format=${format}`,
     barcode: (id: string, format = 'svg', writeText = false) =>
       `/api/admin/v1/product-variants/${id}/barcode?format=${format}&write_text=${writeText}`,
-    byQr: (ref: string) => `/api/admin/v1/product-variants/by-qr/${ref}`,
-    byBarcode: (barcode: string) => `/api/admin/v1/product-variants/by-barcode/${barcode}`,
-    bySku: (sku: string) => `/api/admin/v1/product-variants/by-sku/${sku}`,
+    byQr: (ref: string) => `/api/admin/v1/product-variants/by-qr/${encodeURIComponent(ref)}`,
+    byBarcode: (barcode: string) => `/api/admin/v1/product-variants/by-barcode/${encodeURIComponent(barcode)}`,
+    bySku: (sku: string) => `/api/admin/v1/product-variants/by-sku/${encodeURIComponent(sku)}`,
   },
   catalog: {
     categories: '/api/admin/v1/categories',
